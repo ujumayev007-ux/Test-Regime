@@ -206,19 +206,24 @@
     </div>
 
     <div class="order-summary">
-        <!-- 1. Delivery Date -->
+        <!-- 1. Sana -->
         <div class="form-group">
             <label class="form-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
             <input type="date" id="delivery-date" class="form-input" onchange="updateTotal()">
         </div>
 
-        <!-- 2. Delivery Time -->
+        <!-- 2. Vaqt (Tayyor variantlar) -->
         <div class="form-group">
             <label class="form-label" for="delivery-time">⏰ Soat nechida olib ketasiz?</label>
-            <input type="time" id="delivery-time" class="form-input" onchange="updateTotal()">
+            <select id="delivery-time" class="form-select" onchange="updateTotal()">
+                <option value="" disabled selected>Vaqtni tanlang...</option>
+                <option value="06:00">06:00 da</option>
+                <option value="07:00">07:00 da</option>
+                <option value="10:00">10:00 da</option>
+            </select>
         </div>
 
-        <!-- 3. Branch Selector -->
+        <!-- 3. Filial -->
         <div class="form-group">
             <label class="form-label" for="branch-select">📍 Qaysi filialdan olib ketasiz?</label>
             <select id="branch-select" class="form-select" onchange="updateTotal()">
@@ -229,7 +234,7 @@
             </select>
         </div>
 
-        <!-- 4. Phone Number (Optional) -->
+        <!-- 4. Telefon (Ixtiyoriy) -->
         <div class="form-group">
             <label class="form-label" for="phone-number">📞 Telefon raqamingiz (Ixtiyoriy):</label>
             <input type="tel" id="phone-number" class="form-input" placeholder="+998901234567">
@@ -291,7 +296,6 @@
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
 
-            // Mahsulot tanlangan, sana, vaqt va filial tanlangan bo'lsagina tugma faollashadi
             const isValid = total > 0 && selectedDate !== "" && selectedTime !== "" && selectedBranch !== "";
             document.getElementById('order-btn').disabled = !isValid;
         }
@@ -324,7 +328,6 @@
             messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
 
             try {
-                // Ikkala akkauntga ham birdek xabar yuborish
                 for (const chatId of ADMIN_CHAT_IDS) {
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
