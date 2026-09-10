@@ -4,15 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qallama Do'koni</title>
-    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--tg-theme-bg-color, #f4f4f9);
@@ -21,143 +15,42 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
-
-        h1 {
-            font-size: 20px;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-
-        .products-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            width: 100%;
-            max-width: 400px;
-        }
-
+        h1 { font-size: 20px; margin-bottom: 16px; text-align: center; }
+        .products-container { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; }
         .product-card {
             background-color: var(--tg-theme-secondary-bg-color, #ffffff);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
+            border-radius: 12px; padding: 16px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-
-        .product-img {
-            width: 100%;
-            max-width: 180px;
-            height: 130px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .product-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .product-weight {
-            font-size: 13px;
-            color: #777777;
-            margin-bottom: 6px;
-        }
-
-        .product-price {
-            font-size: 16px;
-            color: var(--tg-theme-button-color, #0088cc);
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .counter-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .product-img { width: 100%; max-width: 180px; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .product-title { font-size: 18px; font-weight: bold; }
+        .product-weight { font-size: 13px; color: #777; margin-bottom: 6px; }
+        .product-price { font-size: 16px; color: #0088cc; font-weight: bold; margin-bottom: 12px; }
+        .counter-container { display: flex; align-items: center; justify-content: center; gap: 12px; }
         .btn-counter {
-            background-color: var(--tg-theme-button-color, #0088cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
+            background-color: #0088cc; color: white; border: none;
+            width: 36px; height: 36px; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer;
         }
-
-        .count-display {
-            font-size: 18px;
-            font-weight: bold;
-            min-width: 24px;
-        }
-
+        .count-display { font-size: 18px; font-weight: bold; min-width: 24px; }
         .order-summary {
-            margin-top: 24px;
-            width: 100%;
-            max-width: 400px;
+            margin-top: 24px; width: 100%; max-width: 400px;
             background-color: var(--tg-theme-secondary-bg-color, #ffffff);
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
+            padding: 16px; border-radius: 12px;
         }
-
-        .form-group {
-            margin-bottom: 16px;
-            text-align: left;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: var(--tg-theme-text-color, #333333);
-        }
-
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
         .form-input, .form-select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-            font-family: inherit;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            outline: none;
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;
+            font-size: 15px; outline: none; background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
         }
-
-        .total-price {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
+        .total-price { font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: center; }
         .btn-order {
-            background-color: #28a745;
-            color: #ffffff;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
+            background-color: #28a745; color: #fff; border: none; width: 100%;
+            padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
         }
-
-        .btn-order:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
+        .btn-order:disabled { background-color: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -165,9 +58,8 @@
     <h1 id="user-greeting">Mazzali Qallamalar!</h1>
 
     <div class="products-container">
-        <!-- 1. Kichik qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Kichik qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Kichik">
             <div class="product-title">Kichik qallama</div>
             <div class="product-weight">O'lchami: 300 gramm</div>
             <div class="product-price">8,000 so'm</div>
@@ -178,9 +70,8 @@
             </div>
         </div>
 
-        <!-- 2. Standard qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Standard qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Standard">
             <div class="product-title">Standard qallama</div>
             <div class="product-weight">O'lchami: 550 gramm</div>
             <div class="product-price">10,000 so'm</div>
@@ -191,9 +82,8 @@
             </div>
         </div>
 
-        <!-- 3. Katta qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Katta qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Katta">
             <div class="product-title">Katta qallama</div>
             <div class="product-weight">O'lchami: 700 gramm</div>
             <div class="product-price">15,000 so'm</div>
@@ -206,13 +96,11 @@
     </div>
 
     <div class="order-summary">
-        <!-- 1. Sana -->
         <div class="form-group">
             <label class="form-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
             <input type="date" id="delivery-date" class="form-input" onchange="updateTotal()">
         </div>
 
-        <!-- 2. Vaqt (Tayyor variantlar) -->
         <div class="form-group">
             <label class="form-label" for="delivery-time">⏰ Soat nechida olib ketasiz?</label>
             <select id="delivery-time" class="form-select" onchange="updateTotal()">
@@ -223,7 +111,6 @@
             </select>
         </div>
 
-        <!-- 3. Filial -->
         <div class="form-group">
             <label class="form-label" for="branch-select">📍 Qaysi filialdan olib ketasiz?</label>
             <select id="branch-select" class="form-select" onchange="updateTotal()">
@@ -234,7 +121,6 @@
             </select>
         </div>
 
-        <!-- 4. Telefon (Ixtiyoriy) -->
         <div class="form-group">
             <label class="form-label" for="phone-number">📞 Telefon raqamingiz (Ixtiyoriy):</label>
             <input type="tel" id="phone-number" class="form-input" placeholder="+998901234567">
@@ -249,33 +135,18 @@
         tg.ready();
         tg.expand();
 
-        const BOT_TOKEN = "8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus";
-        
-        // Birinchi akkaunt (@AsilbekSU) va Ikkinchi akkaunt (@Agrotexnikavaspestexnika)
-        const ADMIN_CHAT_IDS = [
-            "8511645883", 
-            "8276788287"
-        ];
+        // Keyinchalik server manzilingizni shu yerga qo'yasiz
+        const SERVER_URL = "https://server-manzilingiz.onrender.com"; 
 
         const dateInput = document.getElementById('delivery-date');
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.min = today;
+        dateInput.min = new Date().toISOString().split('T')[0];
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}! Tanlang:`;
+            document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}!`;
         }
 
-        const prices = {
-            small: 8000,
-            standard: 10000,
-            large: 15000
-        };
-
-        const quantities = {
-            small: 0,
-            standard: 0,
-            large: 0
-        };
+        const prices = { small: 8000, standard: 10000, large: 15000 };
+        const quantities = { small: 0, standard: 0, large: 0 };
 
         function changeQuantity(item, change) {
             if (quantities[item] + change >= 0) {
@@ -295,55 +166,47 @@
             const selectedBranch = document.getElementById('branch-select').value;
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
-
-            const isValid = total > 0 && selectedDate !== "" && selectedTime !== "" && selectedBranch !== "";
-            document.getElementById('order-btn').disabled = !isValid;
+            document.getElementById('order-btn').disabled = !(total > 0 && selectedDate && selectedTime && selectedBranch);
         }
 
         async function sendOrder() {
-            const user = tg.initDataUnsafe.user || { first_name: "Noma'lum", username: "yo'q" };
+            const user = tg.initDataUnsafe.user || { id: 0, first_name: "Xaridor", username: "yoq" };
             const total = (quantities.small * prices.small) + 
                           (quantities.standard * prices.standard) + 
                           (quantities.large * prices.large);
             
-            const selectedDate = document.getElementById('delivery-date').value;
-            const selectedTime = document.getElementById('delivery-time').value;
-            const selectedBranch = document.getElementById('branch-select').value;
-            const phoneNumber = document.getElementById('phone-number').value.trim();
+            let itemsText = "";
+            if (quantities.small > 0) itemsText += `• Kichik qallama (300g): ${quantities.small} ta\n`;
+            if (quantities.standard > 0) itemsText += `• Standard qallama (550g): ${quantities.standard} ta\n`;
+            if (quantities.large > 0) itemsText += `• Katta qallama (700g): ${quantities.large} ta\n`;
 
-            let messageText = `📥 <b>YANGI BUYURTMA!</b>\n\n`;
-            messageText += `👤 <b>Xaridor:</b> ${user.first_name} (@${user.username || 'username_yoq'})\n`;
-            if (phoneNumber !== "") {
-                messageText += `📞 <b>Tel:</b> ${phoneNumber}\n`;
-            }
-            messageText += `📅 <b>Sana:</b> ${selectedDate}\n`;
-            messageText += `⏰ <b>Vaqt:</b> ${selectedTime}\n`;
-            messageText += `📍 <b>Filial:</b> ${selectedBranch}\n\n`;
-            messageText += `🫓 <b>Buyurtma qilindi:</b>\n`;
-
-            if (quantities.small > 0) messageText += `• Kichik qallama (300g): ${quantities.small} ta\n`;
-            if (quantities.standard > 0) messageText += `• Standard qallama (550g): ${quantities.standard} ta\n`;
-            if (quantities.large > 0) messageText += `• Katta qallama (700g): ${quantities.large} ta\n`;
-
-            messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
+            const payload = {
+                userId: user.id,
+                userName: user.first_name,
+                userHandle: user.username,
+                phone: document.getElementById('phone-number').value.trim(),
+                date: document.getElementById('delivery-date').value,
+                time: document.getElementById('delivery-time').value,
+                branch: document.getElementById('branch-select').value,
+                items: itemsText,
+                totalPrice: total.toLocaleString('uz-UZ')
+            };
 
             try {
-                for (const chatId of ADMIN_CHAT_IDS) {
-                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: chatId,
-                            text: messageText,
-                            parse_mode: 'HTML'
-                        })
-                    });
+                const response = await fetch(`${SERVER_URL}/api/order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Buyurtmangiz qabul qilindi! Buyurtma raqami: #${result.orderId}`);
+                    tg.close();
+                } else {
+                    alert("Xatolik yuz berdi.");
                 }
-
-                alert("Buyurtmangiz qabul qilindi!");
-                tg.close();
             } catch (error) {
-                alert("Xatolik yuz berdi, qaytadan urinib ko'ring.");
+                alert("Server bilan aloqa o'rnatilmadi.");
             }
         }
     </script>
