@@ -167,7 +167,7 @@
     <div class="products-container">
         <!-- 1. Kichik qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://images.unsplash.com/photo-1509722747041-616f39b57569?auto=format&fit=crop&w=400&q=80" alt="Kichik qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Kichik qallama">
             <div class="product-title">Kichik qallama</div>
             <div class="product-weight">O'lchami: 300 gramm</div>
             <div class="product-price">8,000 so'm</div>
@@ -180,7 +180,7 @@
 
         <!-- 2. Standard qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=400&q=80" alt="Standard qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Standard qallama">
             <div class="product-title">Standard qallama</div>
             <div class="product-weight">O'lchami: 550 gramm</div>
             <div class="product-price">10,000 so'm</div>
@@ -193,7 +193,7 @@
 
         <!-- 3. Katta qallama -->
         <div class="product-card">
-            <img class="product-img" src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=80" alt="Katta qallama">
+            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Katta qallama">
             <div class="product-title">Katta qallama</div>
             <div class="product-weight">O'lchami: 700 gramm</div>
             <div class="product-price">15,000 so'm</div>
@@ -206,13 +206,19 @@
     </div>
 
     <div class="order-summary">
-        <!-- Delivery Date -->
+        <!-- 1. Delivery Date -->
         <div class="form-group">
             <label class="form-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
             <input type="date" id="delivery-date" class="form-input" onchange="updateTotal()">
         </div>
 
-        <!-- Branch Selector -->
+        <!-- 2. Delivery Time -->
+        <div class="form-group">
+            <label class="form-label" for="delivery-time">⏰ Soat nechida olib ketasiz?</label>
+            <input type="time" id="delivery-time" class="form-input" onchange="updateTotal()">
+        </div>
+
+        <!-- 3. Branch Selector -->
         <div class="form-group">
             <label class="form-label" for="branch-select">📍 Qaysi filialdan olib ketasiz?</label>
             <select id="branch-select" class="form-select" onchange="updateTotal()">
@@ -221,6 +227,12 @@
                 <option value="Chinor tagi">Chinor tagi</option>
                 <option value="Avtovokzal">Avtovokzal</option>
             </select>
+        </div>
+
+        <!-- 4. Phone Number (Optional) -->
+        <div class="form-group">
+            <label class="form-label" for="phone-number">📞 Telefon raqamingiz (Ixtiyoriy):</label>
+            <input type="tel" id="phone-number" class="form-input" placeholder="+998901234567">
         </div>
 
         <div class="total-price" id="total-text">Jami: 0 so'm</div>
@@ -234,11 +246,10 @@
 
         const BOT_TOKEN = "8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus";
         
-        // 1-id: @AsilbekSU (8511645883)
-        // 2-id: @Agrotexnikavaspestexnika (Ikkinchi akkauntdan @userinfobot orqali olingan ID joylanadi)
+        // Birinchi akkaunt (@AsilbekSU) va Ikkinchi akkaunt (@Agrotexnikavaspestexnika)
         const ADMIN_CHAT_IDS = [
             "8511645883", 
-            "IKKINCHI_AKKAUNT_ID_RAQAMI" // <-- Shu yerga @Agrotexnikavaspestexnika ning sonli ID'si yoziladi
+            "8276788287"
         ];
 
         const dateInput = document.getElementById('delivery-date');
@@ -275,11 +286,13 @@
                           (quantities.large * prices.large);
             
             const selectedDate = document.getElementById('delivery-date').value;
+            const selectedTime = document.getElementById('delivery-time').value;
             const selectedBranch = document.getElementById('branch-select').value;
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
 
-            const isValid = total > 0 && selectedDate !== "" && selectedBranch !== "";
+            // Mahsulot tanlangan, sana, vaqt va filial tanlangan bo'lsagina tugma faollashadi
+            const isValid = total > 0 && selectedDate !== "" && selectedTime !== "" && selectedBranch !== "";
             document.getElementById('order-btn').disabled = !isValid;
         }
 
@@ -288,12 +301,19 @@
             const total = (quantities.small * prices.small) + 
                           (quantities.standard * prices.standard) + 
                           (quantities.large * prices.large);
+            
             const selectedDate = document.getElementById('delivery-date').value;
+            const selectedTime = document.getElementById('delivery-time').value;
             const selectedBranch = document.getElementById('branch-select').value;
+            const phoneNumber = document.getElementById('phone-number').value.trim();
 
             let messageText = `📥 <b>YANGI BUYURTMA!</b>\n\n`;
             messageText += `👤 <b>Xaridor:</b> ${user.first_name} (@${user.username || 'username_yoq'})\n`;
+            if (phoneNumber !== "") {
+                messageText += `📞 <b>Tel:</b> ${phoneNumber}\n`;
+            }
             messageText += `📅 <b>Sana:</b> ${selectedDate}\n`;
+            messageText += `⏰ <b>Vaqt:</b> ${selectedTime}\n`;
             messageText += `📍 <b>Filial:</b> ${selectedBranch}\n\n`;
             messageText += `🫓 <b>Buyurtma qilindi:</b>\n`;
 
@@ -304,19 +324,17 @@
             messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
 
             try {
-                // Ikkala akkauntga bir vaqtda yuborish
+                // Ikkala akkauntga ham birdek xabar yuborish
                 for (const chatId of ADMIN_CHAT_IDS) {
-                    if (chatId !== "IKKINCHI_AKKAUNT_ID_RAQAMI") {
-                        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                chat_id: chatId,
-                                text: messageText,
-                                parse_mode: 'HTML'
-                            })
-                        });
-                    }
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: messageText,
+                            parse_mode: 'HTML'
+                        })
+                    });
                 }
 
                 alert("Buyurtmangiz qabul qilindi!");
