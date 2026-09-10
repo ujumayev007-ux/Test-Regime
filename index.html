@@ -233,7 +233,13 @@
         tg.expand();
 
         const BOT_TOKEN = "8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus";
-        const ADMIN_CHAT_ID = "8511645883";
+        
+        // 1-id: @AsilbekSU (8511645883)
+        // 2-id: @Agrotexnikavaspestexnika (Ikkinchi akkauntdan @userinfobot orqali olingan ID joylanadi)
+        const ADMIN_CHAT_IDS = [
+            "8511645883", 
+            "IKKINCHI_AKKAUNT_ID_RAQAMI" // <-- Shu yerga @Agrotexnikavaspestexnika ning sonli ID'si yoziladi
+        ];
 
         const dateInput = document.getElementById('delivery-date');
         const today = new Date().toISOString().split('T')[0];
@@ -273,7 +279,6 @@
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
 
-            // Miqdor > 0, Sana VA Filial tanlangan bo'lsagina tugma yonadi
             const isValid = total > 0 && selectedDate !== "" && selectedBranch !== "";
             document.getElementById('order-btn').disabled = !isValid;
         }
@@ -299,15 +304,20 @@
             messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
 
             try {
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: ADMIN_CHAT_ID,
-                        text: messageText,
-                        parse_mode: 'HTML'
-                    })
-                });
+                // Ikkala akkauntga bir vaqtda yuborish
+                for (const chatId of ADMIN_CHAT_IDS) {
+                    if (chatId !== "IKKINCHI_AKKAUNT_ID_RAQAMI") {
+                        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: messageText,
+                                parse_mode: 'HTML'
+                            })
+                        });
+                    }
+                }
 
                 alert("Buyurtmangiz qabul qilindi!");
                 tg.close();
