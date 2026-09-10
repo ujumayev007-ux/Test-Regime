@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mening Web App'im</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2 id="greeting">Xush kelibsiz!</h2>
+        <p>Telegram ichidagi veb-sahifangiz muvaffaqiyatli ishlamoqda.</p>
+        <button id="main-btn">Botga ma'lumot yuborish</button>
+    </div>
+
+    <script>
+        // Telegram Web App obyektini rejimga tushirish
+        const tg = window.Telegram.WebApp;
+
+        // Sahifa tayyor bo'lgach Telegram'ga xabar berish
+        tg.ready();
+
+        // Sahifa balandligini to'liq Telegram oynasiga moslash
+        tg.expand();
+
+        // Foydalanuvchi ismini ko'rsatish (agar mavjud bo'lsa)
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.getElementById('greeting').innerText = `Salom, ${user.first_name}!`;
+        }
+
+        // Tugma bosilganda Telegram botga ma'lumot qaytarish
+        document.getElementById('main-btn').addEventListener('click', function() {
+            const data = {
+                message: "Tugma bosildi",
+                time: new Date().toLocaleTimeString()
+            };
+            
+            // Ma'lumotni botga yuborish va Web App'ni yopish
+            tg.sendData(JSON.stringify(data));
+        });
+    </script>
+</body>
+</html>
