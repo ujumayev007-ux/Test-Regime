@@ -6,16 +6,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. Telegram Bot Tokeningiz
 const BOT_TOKEN = '8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus';
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// 2. Buyurtmalar tushadigan Telegram Guruh ID si
-// (Guruh ID si -100 bilan boshlanadi)
-const ADMIN_GROUP_ID = '-100XXXXXXX'; // Guruh ID sini yozasiz
+// Adminlar Telegram ID-lari
+const ADMIN_IDS = ['8511645883', '8276788287'];
 
 let orderCounter = 1000;
 const orders = {};
+
+// Asosiy sahifa (Koyeb serveri ishlab turganini tekshirish uchun)
+app.get('/', (req, res) => {
+    res.send('Server muvaffaqiyatli ishlamoqda!');
+});
 
 app.post('/api/order', async (req, res) => {
     try {
@@ -25,7 +28,8 @@ app.post('/api/order', async (req, res) => {
 
         orders[orderId] = {
             userId: orderData.userId,
-            details: orderData
+            details: orderData,
+            adminMessageIds: {}
         };
 
         let messageText = `📥 <b>BUYURTMA #${orderId}</b>\n\n`;
@@ -38,7 +42,6 @@ app.post('/api/order', async (req, res) => {
         messageText += `💰 <b>Jami summa:</b> ${orderData.totalPrice} so'm\n\n`;
         messageText += `🔄 <b>Holat:</b> <i>Yangi buyurtma</i>`;
 
-        // Siz so'ragan 5 xil tugma:
         const keyboard = {
             inline_keyboard: [
                 [
@@ -55,10 +58,17 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
-        await bot.sendMessage(ADMIN_GROUP_ID, messageText, {
-            parse_mode: 'HTML',
-            reply_markup: keyboard
-        });
+        for (const adminId of ADMIN_IDS) {
+            try {
+                const sentMsg = await bot.sendMessage(adminId, messageText, {
+                    parse_mode: 'HTML',
+                    reply_markup: keyboard
+                });
+                orders[orderId].adminMessageIds[adminId] = sentMsg.message_id;
+            } catch (err) {
+                console.error(`Admin ${adminId} ga xabar yuborishda xatolik:`, err.message);
+            }
+        }
 
         res.status(200).json({ success: true, orderId: orderId });
     } catch (error) {
@@ -66,12 +76,8 @@ app.post('/api/order', async (req, res) => {
     }
 });
 
-// Guruhda tugma bosilganda mijozga avtomatik javob ketishi
 bot.on('callback_query', async (query) => {
     const data = query.data;
-    const chatId = query.message.chat.id;
-    const messageId = query.message.message_id;
-
     const parts = data.split('_');
     const action = parts[1];
     const orderId = parts[2];
@@ -108,23 +114,30 @@ bot.on('callback_query', async (query) => {
             break;
     }
 
-    const updatedText = query.message.text.replace(/🔄 Holat: .*/, `🔄 <b>Holat:</b> ${statusText}`);
+    for (const adminId of ADMIN_IDS) {
+        const msgId = order.adminMessageIds[adminId];
+        if (msgId) {
+            try {
+                const updatedText = query.message.text.replace(/🔄 Holat: .*/, `🔄 <b>Holat:</b> ${statusText}`);
+                await bot.editMessageText(updatedText, {
+                    chat_id: adminId,
+                    message_id: msgId,
+                    parse_mode: 'HTML',
+                    reply_markup: query.message.reply_markup
+                });
+            } catch (err) {
+                // Ignore edit errors
+            }
+        }
+    }
 
     try {
-        await bot.editMessageText(updatedText, {
-            chat_id: chatId,
-            message_id: messageId,
-            parse_mode: 'HTML',
-            reply_markup: query.message.reply_markup
-        });
-
-        // Xaridorga avtomatik xabar boradi
         await bot.sendMessage(order.userId, customerMessage);
-        bot.answerCallbackQuery(query.id, { text: `Status o'zgartirildi: ${statusText}` });
+        bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
     } catch (err) {
-        console.error(err);
+        console.error("Xaridorga xabar yuborishda xatolik:", err.message);
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server ishladi!`));
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Server ${PORT}-portda ishlamoqda...`));
