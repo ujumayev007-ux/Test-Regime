@@ -111,12 +111,12 @@
             text-align: center;
         }
 
-        .date-picker-container {
+        .form-group {
             margin-bottom: 16px;
             text-align: left;
         }
 
-        .date-label {
+        .form-label {
             display: block;
             font-size: 14px;
             font-weight: bold;
@@ -134,6 +134,30 @@
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
             outline: none;
+        }
+
+        .btn-location {
+            background-color: #17a2b8;
+            color: #ffffff;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .location-status {
+            font-size: 12px;
+            margin-top: 6px;
+            color: #28a745;
+            font-weight: bold;
         }
 
         .total-price {
@@ -206,9 +230,19 @@
     </div>
 
     <div class="order-summary">
-        <div class="date-picker-container">
-            <label class="date-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
+        <!-- Delivery Date -->
+        <div class="form-group">
+            <label class="form-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
             <input type="date" id="delivery-date" class="date-input" onchange="updateTotal()">
+        </div>
+
+        <!-- Location Picker -->
+        <div class="form-group">
+            <label class="form-label">📍 Yetkazish manzili:</label>
+            <button class="btn-location" id="loc-btn" onclick="getLocation()">
+                📍 Joylashuvni aniqlash
+            </button>
+            <div id="location-status" class="location-status"></div>
         </div>
 
         <div class="total-price" id="total-text">Jami: 0 so'm</div>
@@ -220,8 +254,10 @@
         tg.ready();
         tg.expand();
 
-        const BOT_TOKEN = "7923403798:AAG5jzoEdh6DkPBYYyJohtOrS66Z2EBnl5c";
-        const ADMIN_CHAT_ID = "8511645883"; // Siz bergan Telegram ID
+        const BOT_TOKEN = "8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus";
+        const ADMIN_CHAT_ID = "8511645883";
+
+        let userLocation = null;
 
         const dateInput = document.getElementById('delivery-date');
         const today = new Date().toISOString().split('T')[0];
@@ -251,6 +287,41 @@
             }
         }
 
+        function getLocation() {
+            const statusDiv = document.getElementById('location-status');
+            const locBtn = document.getElementById('loc-btn');
+
+            if (!navigator.geolocation) {
+                alert("Brauzeringiz geolokatsiyani qo'llab-quvvatlamaydi");
+                return;
+            }
+
+            locBtn.innerText = "⏳ Aniqlanmoqda...";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    userLocation = {
+                        latitude: latitude,
+                        longitude: longitude,
+                        mapUrl: `https://www.google.com/maps?q=${latitude},${longitude}`
+                    };
+
+                    locBtn.innerText = "✅ Joylashuv olindi";
+                    locBtn.style.backgroundColor = "#28a745";
+                    statusDiv.innerText = "Joylashuv muvaffaqiyatli belgilandi!";
+                    updateTotal();
+                },
+                (error) => {
+                    locBtn.innerText = "📍 Joylashuvni qayta aniqlash";
+                    alert("Joylashuvni olishga ruxsat berilmadi yoki xatolik yuz berdi.");
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
         function updateTotal() {
             const total = (quantities.small * prices.small) + 
                           (quantities.standard * prices.standard) + 
@@ -259,7 +330,10 @@
             const selectedDate = document.getElementById('delivery-date').value;
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
-            document.getElementById('order-btn').disabled = !(total > 0 && selectedDate);
+
+            // Buyurtma tugmasi faol bo'lishi uchun: Mahsulot > 0, Sana va Joylashuv tanlangan bo'lishi kerak
+            const isValid = total > 0 && selectedDate && userLocation !== null;
+            document.getElementById('order-btn').disabled = !isValid;
         }
 
         async function sendOrder() {
@@ -271,7 +345,8 @@
 
             let messageText = `📥 <b>YANGI BUYURTMA!</b>\n\n`;
             messageText += `👤 <b>Xaridor:</b> ${user.first_name} (@${user.username || 'username_yoq'})\n`;
-            messageText += `📅 <b>Yetkaziladigan sana:</b> ${selectedDate}\n\n`;
+            messageText += `📅 <b>Yetkaziladigan sana:</b> ${selectedDate}\n`;
+            messageText += `📍 <b>Manzil:</b> <a href="${userLocation.mapUrl}">Xaritada ko'rish</a>\n\n`;
             messageText += `🫓 <b>Buyurtma qilindi:</b>\n`;
 
             if (quantities.small > 0) messageText += `• Kichik qallama (300g): ${quantities.small} ta\n`;
@@ -281,6 +356,7 @@
             messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
 
             try {
+                // 1. Text xabarini va xarita havolasini yuborish
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -291,7 +367,18 @@
                     })
                 });
 
-                alert("Buyurtmangiz qabul qilindi!");
+                // 2. Telegram'ning o'zida jonli xarita (Location Point) yuborish
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: ADMIN_CHAT_ID,
+                        latitude: userLocation.latitude,
+                        longitude: userLocation.longitude
+                    })
+                });
+
+                alert("Buyurtmangiz va manzilingiz qabul qilindi!");
                 tg.close();
             } catch (error) {
                 alert("Xatolik yuz berdi, qaytadan urinib ko'ring.");
