@@ -206,7 +206,6 @@
     </div>
 
     <div class="order-summary">
-        <!-- Yetkazib berish sanasini tanlash -->
         <div class="date-picker-container">
             <label class="date-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
             <input type="date" id="delivery-date" class="date-input" onchange="updateTotal()">
@@ -222,9 +221,8 @@
         tg.expand();
 
         const BOT_TOKEN = "7923403798:AAG5jzoEdh6DkPBYYyJohtOrS66Z2EBnl5c";
-        const ADMIN_CHAT_ID = "AsilbekSU";
+        const ADMIN_CHAT_ID = "8511645883"; // Siz bergan Telegram ID
 
-        // Bugungi kundan oldingi sanalarni tanlab bo'lmasligi uchun cheklov
         const dateInput = document.getElementById('delivery-date');
         const today = new Date().toISOString().split('T')[0];
         dateInput.min = today;
@@ -261,8 +259,6 @@
             const selectedDate = document.getElementById('delivery-date').value;
 
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
-            
-            // Mahsulot tanlangan VA sana ko'rsatilgan bo'lsa tugma faol bo'ladi
             document.getElementById('order-btn').disabled = !(total > 0 && selectedDate);
         }
 
@@ -289,7 +285,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chat_id: "@" + ADMIN_CHAT_ID,
+                        chat_id: ADMIN_CHAT_ID,
                         text: messageText,
                         parse_mode: 'HTML'
                     })
@@ -298,8 +294,7 @@
                 alert("Buyurtmangiz qabul qilindi!");
                 tg.close();
             } catch (error) {
-                alert("Buyurtma yuborildi!");
-                tg.close();
+                alert("Xatolik yuz berdi, qaytadan urinib ko'ring.");
             }
         }
     </script>
