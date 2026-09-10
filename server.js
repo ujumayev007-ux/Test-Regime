@@ -6,20 +6,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const BOT_TOKEN = '8533710758:AAH6yGGAEYEzhLMPUpBO4wtVWscEBiR7Mus';
+// Yangi bot tokeningiz
+const BOT_TOKEN = '8533710758:AAEQ7hx3lyqiMayBC0Vt-IMJsv4hRIdFGwg';
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// Adminlar Telegram ID-lari
+// Adminlarning Telegram ID raqamlari (@AsilbekSU va @Agrotexnikavaspestexnika)
 const ADMIN_IDS = ['8511645883', '8276788287'];
 
 let orderCounter = 1000;
 const orders = {};
 
-// Asosiy sahifa (Koyeb serveri ishlab turganini tekshirish uchun)
+// Server holatini tekshirish uchun
 app.get('/', (req, res) => {
-    res.send('Server muvaffaqiyatli ishlamoqda!');
+    res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
+// Mini App'dan buyurtma qabul qilish
 app.post('/api/order', async (req, res) => {
     try {
         const orderData = req.body;
@@ -58,6 +60,7 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
+        // Ikkala adminga bir vaqtda xabar yuborish
         for (const adminId of ADMIN_IDS) {
             try {
                 const sentMsg = await bot.sendMessage(adminId, messageText, {
@@ -76,6 +79,7 @@ app.post('/api/order', async (req, res) => {
     }
 });
 
+// Adminlardan biri tugmani bosganda ishlovchi mantiq
 bot.on('callback_query', async (query) => {
     const data = query.data;
     const parts = data.split('_');
@@ -114,6 +118,7 @@ bot.on('callback_query', async (query) => {
             break;
     }
 
+    // Ikkala admin chatida ham holatni yangilash
     for (const adminId of ADMIN_IDS) {
         const msgId = order.adminMessageIds[adminId];
         if (msgId) {
@@ -126,11 +131,12 @@ bot.on('callback_query', async (query) => {
                     reply_markup: query.message.reply_markup
                 });
             } catch (err) {
-                // Ignore edit errors
+                // Tahrirlashda xatolik bo'lsa o'tkazib yuboriladi
             }
         }
     }
 
+    // Xaridorga avtomatik bildirishnoma yuborish
     try {
         await bot.sendMessage(order.userId, customerMessage);
         bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
@@ -139,5 +145,5 @@ bot.on('callback_query', async (query) => {
     }
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server ${PORT}-portda ishlamoqda...`));
