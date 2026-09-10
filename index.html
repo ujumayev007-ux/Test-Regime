@@ -3,80 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mening Web App'im</title>
+    <title>Internet Do'kon</title>
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            background-color: var(--tg-theme-bg-color, #f4f4f9);
+            color: var(--tg-theme-text-color, #222222);
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            min-height: 100vh;
         }
 
-        .card {
-            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 20px;
-            border-radius: 12px;
+        h1 {
+            font-size: 20px;
+            margin-bottom: 16px;
             text-align: center;
-            width: 100%;
-            max-width: 300px;
         }
 
-        button {
-            background-color: var(--tg-theme-button-color, #2481cc);
+        .products-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .product-card {
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .product-icon {
+            font-size: 50px;
+            margin-bottom: 8px;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .product-price {
+            font-size: 16px;
+            color: var(--tg-theme-button-color, #0088cc);
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .counter-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-counter {
+            background-color: var(--tg-theme-button-color, #0088cc);
             color: var(--tg-theme-button-text-color, #ffffff);
             border: none;
-            padding: 12px 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .count-display {
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 20px;
+        }
+
+        .order-summary {
+            margin-top: 24px;
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .total-price {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .btn-order {
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            width: 100%;
+            padding: 14px;
             border-radius: 8px;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-order:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2 id="greeting">Xush kelibsiz!</h2>
-        <p>Telegram ichidagi veb-sahifangiz muvaffaqiyatli ishlamoqda.</p>
-        <button id="main-btn">Botga ma'lumot yuborish</button>
+    <h1 id="user-greeting">Internet Do'konimizga Xush Kelibsiz!</h1>
+
+    <div class="products-container">
+        <!-- 1-mahsulot: Qizil avto -->
+        <div class="product-card">
+            <div class="product-icon">🚗</div>
+            <div class="product-title">Qizil avto</div>
+            <div class="product-price">150,000,000 so'm</div>
+            <div class="counter-container">
+                <button class="btn-counter" onclick="changeQuantity('auto', -1)">-</button>
+                <span class="count-display" id="count-auto">0</span>
+                <button class="btn-counter" onclick="changeQuantity('auto', 1)">+</button>
+            </div>
+        </div>
+
+        <!-- 2-mahsulot: Sariq velosiped -->
+        <div class="product-card">
+            <div class="product-icon">🚲</div>
+            <div class="product-title">Sariq velosiped</div>
+            <div class="product-price">2,500,000 so'm</div>
+            <div class="counter-container">
+                <button class="btn-counter" onclick="changeQuantity('bike', -1)">-</button>
+                <span class="count-display" id="count-bike">0</span>
+                <button class="btn-counter" onclick="changeQuantity('bike', 1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="order-summary">
+        <div class="total-price" id="total-text">Jami: 0 so'm</div>
+        <button class="btn-order" id="order-btn" onclick="sendOrder()" disabled>Buyurtma berish</button>
     </div>
 
     <script>
-        // Telegram Web App obyektini rejimga tushirish
         const tg = window.Telegram.WebApp;
-
-        // Sahifa tayyor bo'lgach Telegram'ga xabar berish
         tg.ready();
-
-        // Sahifa balandligini to'liq Telegram oynasiga moslash
         tg.expand();
 
-        // Foydalanuvchi ismini ko'rsatish (agar mavjud bo'lsa)
+        // Foydalanuvchi ismini ko'rsatish
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('greeting').innerText = `Salom, ${user.first_name}!`;
+            document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}! Mahsulotni tanlang:`;
         }
 
-        // Tugma bosilganda Telegram botga ma'lumot qaytarish
-        document.getElementById('main-btn').addEventListener('click', function() {
-            const data = {
-                message: "Tugma bosildi",
-                time: new Date().toLocaleTimeString()
-            };
+        // Narxlar va buyurtma holati
+        const prices = {
+            auto: 150000000,
+            bike: 250000
+        };
+
+        const quantities = {
+            auto: 0,
+            bike: 0
+        };
+
+        function changeQuantity(item, change) {
+            if (quantities[item] + change >= 0) {
+                quantities[item] += change;
+                document.getElementById(`count-${item}`).innerText = quantities[item];
+                updateTotal();
+            }
+        }
+
+        function updateTotal() {
+            const total = (quantities.auto * prices.auto) + (quantities.bike * prices.bike);
+            document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
             
-            // Ma'lumotni botga yuborish va Web App'ni yopish
-            tg.sendData(JSON.stringify(data));
-        });
+            const orderBtn = document.getElementById('order-btn');
+            if (total > 0) {
+                orderBtn.disabled = false;
+            } else {
+                orderBtn.disabled = true;
+            }
+        }
+
+        function sendOrder() {
+            const orderData = {
+                items: [
+                    { name: "Qizil avto", quantity: quantities.auto, price: prices.auto },
+                    { name: "Sariq velosiped", quantity: quantities.bike, price: prices.bike }
+                ].filter(item => item.quantity > 0),
+                totalSum: (quantities.auto * prices.auto) + (quantities.bike * prices.bike)
+            };
+
+            // Ma'lumotni Telegram botga yuborish va oynani yopish
+            tg.sendData(JSON.stringify(orderData));
+        }
     </script>
 </body>
 </html>
