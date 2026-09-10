@@ -111,6 +111,31 @@
             text-align: center;
         }
 
+        .date-picker-container {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .date-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: var(--tg-theme-text-color, #333333);
+        }
+
+        .date-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+            font-family: inherit;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            outline: none;
+        }
+
         .total-price {
             font-size: 18px;
             font-weight: bold;
@@ -181,6 +206,12 @@
     </div>
 
     <div class="order-summary">
+        <!-- Yetkazib berish sanasini tanlash -->
+        <div class="date-picker-container">
+            <label class="date-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
+            <input type="date" id="delivery-date" class="date-input" onchange="updateTotal()">
+        </div>
+
         <div class="total-price" id="total-text">Jami: 0 so'm</div>
         <button class="btn-order" id="order-btn" onclick="sendOrder()" disabled>Buyurtma berish</button>
     </div>
@@ -191,7 +222,12 @@
         tg.expand();
 
         const BOT_TOKEN = "7923403798:AAG5jzoEdh6DkPBYYyJohtOrS66Z2EBnl5c";
-        const ADMIN_CHAT_ID = "AsilbekSU"; // Zakaz boradigan Telegram username
+        const ADMIN_CHAT_ID = "AsilbekSU";
+
+        // Bugungi kundan oldingi sanalarni tanlab bo'lmasligi uchun cheklov
+        const dateInput = document.getElementById('delivery-date');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
 
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}! Tanlang:`;
@@ -222,8 +258,12 @@
                           (quantities.standard * prices.standard) + 
                           (quantities.large * prices.large);
             
+            const selectedDate = document.getElementById('delivery-date').value;
+
             document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
-            document.getElementById('order-btn').disabled = (total === 0);
+            
+            // Mahsulot tanlangan VA sana ko'rsatilgan bo'lsa tugma faol bo'ladi
+            document.getElementById('order-btn').disabled = !(total > 0 && selectedDate);
         }
 
         async function sendOrder() {
@@ -231,9 +271,11 @@
             const total = (quantities.small * prices.small) + 
                           (quantities.standard * prices.standard) + 
                           (quantities.large * prices.large);
+            const selectedDate = document.getElementById('delivery-date').value;
 
             let messageText = `📥 <b>YANGI BUYURTMA!</b>\n\n`;
-            messageText += `👤 <b>Xaridor:</b> ${user.first_name} (@${user.username || 'username_yoq'})\n\n`;
+            messageText += `👤 <b>Xaridor:</b> ${user.first_name} (@${user.username || 'username_yoq'})\n`;
+            messageText += `📅 <b>Yetkaziladigan sana:</b> ${selectedDate}\n\n`;
             messageText += `🫓 <b>Buyurtma qilindi:</b>\n`;
 
             if (quantities.small > 0) messageText += `• Kichik qallama (300g): ${quantities.small} ta\n`;
@@ -243,7 +285,6 @@
             messageText += `\n💰 <b>Jami summa:</b> ${total.toLocaleString('uz-UZ')} so'm`;
 
             try {
-                // Telegram API orqali xabar yuborish
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
