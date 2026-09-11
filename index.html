@@ -9,17 +9,39 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--tg-theme-bg-color, #f4f4f9);
-            color: var(--tg-theme-text-color, #222222);
+            background-color: #f4f4f9;
+            color: #222222;
             padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1 { font-size: 20px; margin-bottom: 16px; text-align: center; }
+        h1 { font-size: 20px; margin-bottom: 12px; text-align: center; }
+        
+        /* Buyurtma holatini tekshirish bloki */
+        .status-checker {
+            width: 100%; max-width: 400px; background: #ffffff;
+            padding: 14px; border-radius: 12px; margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;
+        }
+        .status-checker-title { font-weight: bold; font-size: 15px; margin-bottom: 8px; }
+        .checker-input-group { display: flex; gap: 8px; }
+        .checker-input {
+            flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc;
+            font-size: 14px; outline: none;
+        }
+        .btn-check {
+            background-color: #0088cc; color: white; border: none;
+            padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        .status-result {
+            margin-top: 10px; padding: 10px; border-radius: 8px;
+            background-color: #eef7ff; font-weight: bold; display: none; font-size: 14px;
+        }
+
         .products-container { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; }
         .product-card {
-            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
+            background-color: #ffffff;
             border-radius: 12px; padding: 16px; text-align: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
@@ -34,16 +56,15 @@
         }
         .count-display { font-size: 18px; font-weight: bold; min-width: 24px; }
         .order-summary {
-            margin-top: 24px; width: 100%; max-width: 400px;
-            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
-            padding: 16px; border-radius: 12px;
+            margin-top: 20px; width: 100%; max-width: 400px;
+            background-color: #ffffff; padding: 16px; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .form-group { margin-bottom: 16px; text-align: left; }
         .form-label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
         .form-input, .form-select {
             width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;
-            font-size: 15px; outline: none; background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
+            font-size: 15px; outline: none; background-color: #fff; color: #000;
         }
         .total-price { font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: center; }
         .btn-order {
@@ -56,6 +77,16 @@
 <body>
 
     <h1 id="user-greeting">Mazzali Qallamalar!</h1>
+
+    <!-- 🔍 BUYURTMA STATUSINI TEKSHIRISH BO'LIMI -->
+    <div class="status-checker">
+        <div class="status-checker-title">🔍 Buyurtma holatini tekshirish</div>
+        <div class="checker-input-group">
+            <input type="number" id="check-order-id" class="checker-input" placeholder="Buyurtma raqami (masalan: 1001)">
+            <button class="btn-check" onclick="checkOrderStatus()">Tekshirish</button>
+        </div>
+        <div id="status-result" class="status-result"></div>
+    </div>
 
     <div class="products-container">
         <div class="product-card">
@@ -122,7 +153,7 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label" for="phone-number">📞 Telefon raqamingiz (Ixtiyoriy):</label>
+            <label class="form-label" for="phone-number">📞 Telefon raqamingiz (Ixtiyoriy/Majburiy):</label>
             <input type="tel" id="phone-number" class="form-input" placeholder="+998901234567">
         </div>
 
@@ -131,19 +162,19 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}!`;
+            }
+        }
 
-        // Render'dagi tayyor havola
         const SERVER_URL = "https://test-regime.onrender.com"; 
 
         const dateInput = document.getElementById('delivery-date');
         dateInput.min = new Date().toISOString().split('T')[0];
-
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}!`;
-        }
 
         const prices = { small: 8000, standard: 10000, large: 15000 };
         const quantities = { small: 0, standard: 0, large: 0 };
@@ -170,7 +201,10 @@
         }
 
         async function sendOrder() {
-            const user = tg.initDataUnsafe.user || { id: 0, first_name: "Xaridor", username: "yoq" };
+            const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) 
+                ? tg.initDataUnsafe.user 
+                : { id: null, first_name: "Veb-Mijoz", username: "" };
+
             const total = (quantities.small * prices.small) + 
                           (quantities.standard * prices.standard) + 
                           (quantities.large * prices.large);
@@ -200,13 +234,44 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    alert(`Buyurtmangiz qabul qilindi! Buyurtma raqami: #${result.orderId}`);
-                    tg.close();
+                    alert(`Buyurtmangiz qabul qilindi!\n\n📌 Buyurtma raqamingiz: #${result.orderId}\nUshbu raqam orqali saytda holatni tekshirib borishingiz mumkin.`);
+                    if (tg) tg.close();
                 } else {
                     alert("Xatolik yuz berdi.");
                 }
             } catch (error) {
                 alert("Server bilan aloqa o'rnatilmadi.");
+            }
+        }
+
+        // 🔍 BUYURTMA STATUSINI TEKSHIRISH FUNKSIYASI
+        async function checkOrderStatus() {
+            const orderId = document.getElementById('check-order-id').value.trim();
+            const resultDiv = document.getElementById('status-result');
+
+            if (!orderId) {
+                alert("Iltimos, buyurtma raqamini kiriting!");
+                return;
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.style.color = "#333";
+            resultDiv.innerText = "Tekshirilmoqda...";
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/order/${orderId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.style.color = "#0088cc";
+                    resultDiv.innerHTML = `📦 <b>Buyurtma #${data.orderId}</b><br>Holati: <u>${data.status}</u>`;
+                } else {
+                    resultDiv.style.color = "red";
+                    resultDiv.innerText = "❌ Buyurtma topilmadi!";
+                }
+            } catch (error) {
+                resultDiv.style.color = "red";
+                resultDiv.innerText = "⚠️ Server bilan aloqa yo'q.";
             }
         }
     </script>
