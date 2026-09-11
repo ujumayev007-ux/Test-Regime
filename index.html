@@ -42,8 +42,9 @@
         /* Jami summa */
         .total-box { font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eee; color: #222; }
         .main-btn { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.3); margin-top: 10px; }
+        .secondary-btn { width: 100%; padding: 14px; background: #6c757d; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
-        /* 1. EKRANNING O'NG TOMON YUQORISIDA TURADIGAN QO'NG'IROQCHA TUGMASI */
+        /* O'NG TOMON YUQORIDAGI QO'NG'IROQCHA */
         .floating-bell { position: fixed; right: 16px; top: 16px; width: 50px; height: 50px; background-color: #0088cc; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,136,204,0.4); cursor: pointer; z-index: 999; animation: pulse 2s infinite; }
 
         @keyframes pulse {
@@ -61,6 +62,12 @@
         .close-btn { font-size: 24px; font-weight: bold; cursor: pointer; color: #888; border: none; background: none; }
         .form-group { margin-bottom: 14px; }
         .form-group label { font-size: 14px; font-weight: 600; color: #444; }
+
+        /* Buyurtmalar tarixi stili */
+        .history-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+        .history-date { font-size: 12px; color: #888; font-weight: bold; }
+        .history-items { font-size: 14px; color: #333; margin: 6px 0; white-space: pre-line; }
+        .history-total { font-size: 14px; font-weight: bold; color: #28a745; text-align: right; }
     </style>
 </head>
 <body>
@@ -160,6 +167,9 @@
         <input type="tel" id="optionalPhone" placeholder="+998 90 123-45-67" oninput="formatUzPhone(this)">
     </div>
 
+    <!-- BUYURTMALAR TARIXI TUGMASI -->
+    <button class="secondary-btn" onclick="openHistoryModal()">📜 Buyurtmalar tarixi</button>
+
     <!-- BUYURTMA BERISH TUGMASI -->
     <button class="main-btn" onclick="submitFinalOrder()">🛍 Buyurtmani rasmiylashtirish</button>
 
@@ -180,13 +190,29 @@
                 </div>
             </div>
 
-            <!-- TELEFON RAQAM KIRITISH MAYDONI (AVTOMATIK STANDART MASKADA) -->
+            <!-- TELEFON RAQAM KIRITISH MAYDONI -->
             <div class="form-group hidden" id="modalPhoneGroup">
                 <label id="modalPhoneLabel">Telefon raqamingizni kiriting:</label>
                 <input type="tel" id="modalPhoneInput" placeholder="+998 90 123-45-67" oninput="formatUzPhone(this)">
             </div>
 
             <button class="main-btn" style="margin-top: 15px;" onclick="closeContactModal()">Saqlash</button>
+        </div>
+    </div>
+
+    <!-- BUYURTMALAR TARIXI POPUP MODAL -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 O'tgan buyurtmalaringiz</h3>
+                <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
+            </div>
+
+            <div id="historyListContainer">
+                <!-- Tarix shu yerda ko'rinadi -->
+            </div>
+
+            <button class="secondary-btn" style="margin-top: 15px;" onclick="closeHistoryModal()">Yopish</button>
         </div>
     </div>
 
@@ -225,7 +251,7 @@
             if (digits.startsWith('998')) {
                 digits = digits.substring(3);
             }
-            digits = digits.substring(0, 9); // faqat 9 ta raqam olinadi
+            digits = digits.substring(0, 9);
 
             let formatted = '+998';
             if (digits.length > 0) formatted += ' ' + digits.substring(0, 2);
@@ -310,12 +336,43 @@
             }
         }
 
-        function openContactModal() {
-            document.getElementById('contactModal').classList.add('active');
+        function openContactModal() { document.getElementById('contactModal').classList.add('active'); }
+        function closeContactModal() { document.getElementById('contactModal').classList.remove('active'); }
+
+        /* BUYURTMALAR TARIXI FUNKSIYALARI */
+        function openHistoryModal() {
+            renderHistory();
+            document.getElementById('historyModal').classList.add('active');
+        }
+        function closeHistoryModal() { document.getElementById('historyModal').classList.remove('active'); }
+
+        function saveOrderToHistory(order) {
+            let history = JSON.parse(localStorage.getItem('qallama_history') || '[]');
+            history.unshift(order); // yangisini boshiga qo'shish
+            localStorage.setItem('qallama_history', JSON.stringify(history));
         }
 
-        function closeContactModal() {
-            document.getElementById('contactModal').classList.remove('active');
+        function renderHistory() {
+            const container = document.getElementById('historyListContainer');
+            let history = JSON.parse(localStorage.getItem('qallama_history') || '[]');
+
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">Sizda hali o\'tgan buyurtmalar yo\'q.</p>';
+                return;
+            }
+
+            let html = '';
+            history.forEach((ord, index) => {
+                html += `
+                    <div class="history-card">
+                        <div class="history-date">📅 ${ord.date} - ⏰ ${ord.time}</div>
+                        <div class="history-items">${ord.items}</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">📍 ${ord.branch}</div>
+                        <div class="history-total">💰 ${ord.totalPrice} so'm</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         async function submitFinalOrder() {
@@ -364,7 +421,6 @@
             const user = tg.initDataUnsafe?.user || {};
             const userName = (user.first_name || '') + ' ' + (user.last_name || '');
             
-            /* Telefon raqamni asosiy kartochkadan yoki modal oynadan olish */
             const mainPhone = document.getElementById('optionalPhone').value.trim();
             const modalPhone = document.getElementById('modalPhoneInput').value.trim();
             const finalPhone = mainPhone || modalPhone || 'Kiritilmadi';
@@ -381,6 +437,9 @@
                 items: itemsArr.join('\n'),
                 totalPrice: totalSum.toLocaleString('uz-UZ')
             };
+
+            // Buyurtmani local xotiraga tarix uchun saqlaymiz
+            saveOrderToHistory(orderPayload);
 
             try {
                 const res = await fetch('https://test-regime.onrender.com/api/order', {
