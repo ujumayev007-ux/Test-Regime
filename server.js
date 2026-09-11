@@ -6,22 +6,39 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Yangi bot tokeningiz
+// Bot tokeningiz
 const BOT_TOKEN = '8533710758:AAEQ7hx3lyqiMayBC0Vt-IMJsv4hRIdFGwg';
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 // Adminlarning Telegram ID raqamlari
 const ADMIN_IDS = ['8511645883', '8276788287'];
 
-let orderCounter = 1000;
+// Buyurtmalarni vaqtinchalik xotirada saqlash obyekti
 const orders = {};
+
+// Unikal Vaqt Stampi bo'yicha ID yaratish algoritmi
+function generateOrderId() {
+    const now = new Date();
+    // O'zbekiston vaqti offseti (UTC+5)
+    const utcHours = now.getUTCHours() + 5;
+    now.setUTCHours(utcHours);
+
+    const year = String(now.getFullYear()).slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+}
 
 // Server holatini tekshirish
 app.get('/', (req, res) => {
     res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
-// 🔍 YANGI: Sayt orqali buyurtma holatini tekshirish API-si
+// 🔍 Sayt orqali buyurtma holatini tekshirish API-si
 app.get('/api/order/:id', (req, res) => {
     const orderId = req.params.id;
     const order = orders[orderId];
@@ -42,8 +59,8 @@ app.get('/api/order/:id', (req, res) => {
 app.post('/api/order', async (req, res) => {
     try {
         const orderData = req.body;
-        orderCounter++;
-        const orderId = orderCounter;
+        // Yangi unikal vaqt stampi asosida ID olamiz
+        const orderId = generateOrderId();
 
         orders[orderId] = {
             userId: orderData.userId || null,
@@ -135,10 +152,8 @@ bot.on('callback_query', async (query) => {
             break;
     }
 
-    // Xotiradagi statusni yangilaymiz
     order.status = statusText;
 
-    // Adminlar chatidagi xabar tekstini yangilash
     for (const adminId of ADMIN_IDS) {
         const msgId = order.adminMessageIds[adminId];
         if (msgId) {
@@ -151,12 +166,11 @@ bot.on('callback_query', async (query) => {
                     reply_markup: query.message.reply_markup
                 });
             } catch (err) {
-                // Ignore edit error
+                // Edit error ignore
             }
         }
     }
 
-    // Agar Telegram userId bo'lsa, xaridorga botdan xabar boradi
     if (order.userId) {
         try {
             await bot.sendMessage(order.userId, customerMessage);
