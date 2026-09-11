@@ -7,7 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; padding: 14px; padding-bottom: 90px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; padding: 14px; padding-bottom: 100px; position: relative; min-height: 100vh; }
         
         /* Kartochkalar */
         .card { background: #ffffff; border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -41,7 +41,16 @@
         
         /* Jami summa */
         .total-box { font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eee; color: #222; }
-        .main-btn { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+        .main-btn { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.3); margin-top: 10px; }
+
+        /* EKANNING O'NG TOMONIDA TURADIGAN QO'NG'IROQCHA TUGMASI */
+        .floating-bell { position: fixed; right: 20px; bottom: 80px; width: 56px; height: 56px; background-color: #0088cc; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 26px; box-shadow: 0 4px 15px rgba(0,136,204,0.4); cursor: pointer; z-index: 999; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
 
         /* Modal oyna */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -61,7 +70,7 @@
         <h3>🫓 Qallamalar menyusi</h3>
         
         <div class="item">
-            <img src="https://i.postimg.co/2S84s90X/qallama.jpg" class="item-img" alt="Kichik qallama">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLzU9MMqaCM1l_Pro_8A94PMsqO0eeCmp10KmQqs1V7DKdNNFyl20wY2Mq&s=10" class="item-img" alt="Kichik qallama">
             <div class="item-details">
                 <div class="item-title">Kichik qallama</div>
                 <div class="item-sub">Vazni: 350 gr</div>
@@ -75,7 +84,7 @@
         </div>
 
         <div class="item">
-            <img src="https://i.postimg.co/2S84s90X/qallama.jpg" class="item-img" alt="O'rtacha qallama">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLzU9MMqaCM1l_Pro_8A94PMsqO0eeCmp10KmQqs1V7DKdNNFyl20wY2Mq&s=10" class="item-img" alt="O'rtacha qallama">
             <div class="item-details">
                 <div class="item-title">O'rtacha qallama</div>
                 <div class="item-sub">Vazni: 550 gr</div>
@@ -89,7 +98,7 @@
         </div>
 
         <div class="item">
-            <img src="https://i.postimg.co/2S84s90X/qallama.jpg" class="item-img" alt="Katta qallama">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLzU9MMqaCM1l_Pro_8A94PMsqO0eeCmp10KmQqs1V7DKdNNFyl20wY2Mq&s=10" class="item-img" alt="Katta qallama">
             <div class="item-details">
                 <div class="item-title">Katta qallama</div>
                 <div class="item-sub">Vazni: 700 gr</div>
@@ -112,9 +121,9 @@
     <div class="card">
         <h3>⏰ Vaqtni tanlang</h3>
         <div class="btn-grid" id="timeGroup">
-            <div class="opt-btn" onclick="selectTime('06:00', this)">06:00</div>
-            <div class="opt-btn" onclick="selectTime('12:00', this)">12:00</div>
-            <div class="opt-btn" onclick="selectTime('18:00', this)">18:00</div>
+            <div class="opt-btn" onclick="selectTime('05:00', this)">05:00</div>
+            <div class="opt-btn" onclick="selectTime('07:00', this)">07:00</div>
+            <div class="opt-btn" onclick="selectTime('10:00', this)">10:00</div>
             <div class="opt-btn" onclick="selectTime('custom', this)">⏱ Boshqa vaqt</div>
         </div>
         <input type="text" id="customTimeInput" class="hidden" placeholder="Masalan: 15:30 yoki soat 4 larda">
@@ -142,24 +151,24 @@
         </div>
     </div>
 
-    <button class="main-btn" onclick="openCustomerModal()">🛍 Buyurtmani rasmiylashtirish</button>
+    <!-- 4. IXTIYORIY TELEFON RAQAMI -->
+    <div class="card">
+        <h3>📞 Telefon raqamingiz (Ixtiyoriy)</h3>
+        <input type="tel" id="optionalPhone" placeholder="+998901234567">
+    </div>
 
-    <!-- PUSH-UP POPUP: XARIDOR MA'LUMOTLARI -->
-    <div class="modal-overlay" id="customerModal">
+    <!-- BUYURTMA BERISH TUGMASI -->
+    <button class="main-btn" onclick="submitFinalOrder()">🛍 Buyurtmani rasmiylashtirish</button>
+
+    <!-- 5. DOIMIY QO'NG'IROQCHA TUGMASI (O'NG TOMONDA) -->
+    <div class="floating-bell" onclick="openContactModal()">🔔</div>
+
+    <!-- ALOQA USULI UCHUN POPUP MODAL -->
+    <div class="modal-overlay" id="contactModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>👤 Ma'lumotlaringizni kiriting</h3>
-                <button class="close-btn" onclick="closeCustomerModal()">&times;</button>
-            </div>
-
-            <div class="form-group">
-                <label>Ism va Familiya:</label>
-                <input type="text" id="userName" placeholder="Ismingizni yozing">
-            </div>
-
-            <div class="form-group">
-                <label>Telefon raqam:</label>
-                <input type="tel" id="userPhone" placeholder="+998901234567">
+                <h3>🔔 Aloqa usulini tanlang</h3>
+                <button class="close-btn" onclick="closeContactModal()">&times;</button>
             </div>
 
             <div class="form-group">
@@ -171,7 +180,7 @@
                 </div>
             </div>
 
-            <button class="main-btn" style="margin-top: 15px;" onclick="submitFinalOrder()">✅ Tasdiqlash va Yuborish</button>
+            <button class="main-btn" style="margin-top: 15px;" onclick="closeContactModal()">Saqlash</button>
         </div>
     </div>
 
@@ -189,11 +198,6 @@
         let selectedTime = '';
         let selectedBranch = '';
         let userLocationGeo = '';
-
-        if (tg.initDataUnsafe?.user) {
-            const u = tg.initDataUnsafe.user;
-            document.getElementById('userName').value = (u.first_name || '') + ' ' + (u.last_name || '');
-        }
 
         function changeQty(id, delta, price) {
             if (cart[id].qty + delta >= 0) {
@@ -275,7 +279,15 @@
             }
         }
 
-        function openCustomerModal() {
+        function openContactModal() {
+            document.getElementById('contactModal').classList.add('active');
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+        }
+
+        async function submitFinalOrder() {
             let hasItems = Object.values(cart).some(item => item.qty > 0);
             if (!hasItems) {
                 alert("Iltimos, kamida bitta qallama tanlang!");
@@ -287,22 +299,6 @@
             }
             if (!selectedBranch) {
                 alert("Iltimos, filial yoki manzilni tanlang!");
-                return;
-            }
-
-            document.getElementById('customerModal').classList.add('active');
-        }
-
-        function closeCustomerModal() {
-            document.getElementById('customerModal').classList.remove('active');
-        }
-
-        async function submitFinalOrder() {
-            const name = document.getElementById('userName').value.trim();
-            const phone = document.getElementById('userPhone').value.trim();
-
-            if (!name || !phone) {
-                alert("Iltimos, ismingiz va telefon raqamingizni kiriting!");
                 return;
             }
 
@@ -335,12 +331,14 @@
             }
 
             const user = tg.initDataUnsafe?.user || {};
+            const userName = (user.first_name || '') + ' ' + (user.last_name || '');
+            const optionalPhone = document.getElementById('optionalPhone').value.trim();
 
             const orderPayload = {
                 userId: user.id || null,
-                userName: name,
+                userName: userName.trim() || 'Mijoz',
                 userHandle: user.username || '',
-                phone: phone,
+                phone: optionalPhone || 'Kiritilmadi',
                 contactPreference: selectedPref,
                 time: finalTime,
                 branch: finalBranch,
