@@ -7,45 +7,61 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; padding: 12px; }
-        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        h3 { font-size: 16px; margin-bottom: 12px; color: #222; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f0f2f5; color: #1c1e21; padding: 14px; padding-bottom: 80px; }
         
-        /* Item styling */
-        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        /* Katta chiroyli kartochkalar */
+        .card { background: #ffffff; border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h3 { font-size: 18px; margin-bottom: 14px; color: #111; font-weight: 700; }
+
+        /* Mahsulot kartochkasi rasmlar bilan */
+        .item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
         .item:last-child { border-bottom: none; }
-        .item-info { flex: 1; }
-        .item-title { font-weight: 600; font-size: 15px; }
-        .item-price { font-size: 13px; color: #666; margin-top: 2px; }
+        .item-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 12px; background-color: #eee; }
+        .item-details { flex: 1; }
+        .item-title { font-weight: 700; font-size: 16px; color: #222; }
+        .item-price { font-size: 14px; color: #0088cc; font-weight: 600; margin-top: 4px; }
+        
+        /* Sanoq tugmalari */
         .counter { display: flex; align-items: center; gap: 10px; }
-        .btn-counter { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #0088cc; background: #f0f8ff; color: #0088cc; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .count-val { font-weight: bold; min-width: 16px; text-align: center; }
+        .btn-counter { width: 36px; height: 36px; border-radius: 10px; border: none; background: #e7f3ff; color: #0088cc; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-counter:active { transform: scale(0.95); }
+        .count-val { font-weight: 700; font-size: 16px; min-width: 20px; text-align: center; }
 
-        /* Form elements */
-        input[type="text"], input[type="tel"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; margin-top: 6px; outline: none; }
+        /* Tugmalar to'plami */
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
+        .opt-btn { padding: 12px; border: 2px solid #e4e6eb; border-radius: 12px; background: #f8f9fa; font-size: 14px; text-align: center; cursor: pointer; font-weight: 600; color: #444; transition: 0.2s; }
+        .opt-btn.active { background: #e7f3ff; color: #0088cc; border-color: #0088cc; }
+
+        input[type="text"], input[type="tel"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 15px; margin-top: 8px; outline: none; }
         input[type="text"]:focus, input[type="tel"]:focus { border-color: #0088cc; }
-        .form-group { margin-bottom: 12px; }
-        label { font-size: 13px; font-weight: 600; color: #555; }
-
-        /* Button options */
-        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
-        .opt-btn { padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-size: 13px; text-align: center; cursor: pointer; font-weight: 500; }
-        .opt-btn.active { background: #0088cc; color: #fff; border-color: #0088cc; }
 
         .hidden { display: none; }
-        .total-box { font-size: 18px; font-weight: bold; text-align: space-between; display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #eee; }
-        .submit-btn { width: 100%; padding: 14px; background: #28a745; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        /* Jami summa qismi */
+        .total-box { font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eee; color: #222; }
+        .main-btn { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+
+        /* PUSH-UP MODAL (XARIDOR MA'LUMOTLARI UCHUN) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-content { background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; transform: translateY(100%); transition: transform 0.3s ease; max-height: 85vh; overflow-y: auto; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .close-btn { font-size: 24px; font-weight: bold; cursor: pointer; color: #888; border: none; background: none; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { font-size: 14px; font-weight: 600; color: #444; }
     </style>
 </head>
 <body>
 
-    <!-- 1. TAOMLAR MENYUSI -->
+    <!-- 1. TAOMLAR MENYUSI (RASMLAR BILAN) -->
     <div class="card">
-        <h3>🫓 Menyudagi taomlar:</h3>
+        <h3>🫓 Qallamalar menyusi</h3>
         
         <div class="item">
-            <div class="item-info">
-                <div class="item-title">Kichik qallama (300g)</div>
+            <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300" class="item-img" alt="Kichik qallama">
+            <div class="item-details">
+                <div class="item-title">Kichik qallama</div>
                 <div class="item-price">8 000 so'm</div>
             </div>
             <div class="counter">
@@ -56,8 +72,9 @@
         </div>
 
         <div class="item">
-            <div class="item-info">
-                <div class="item-title">O'rtacha qallama (500g)</div>
+            <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300" class="item-img" alt="O'rtacha qallama">
+            <div class="item-details">
+                <div class="item-title">O'rtacha qallama</div>
                 <div class="item-price">14 000 so'm</div>
             </div>
             <div class="counter">
@@ -68,8 +85,9 @@
         </div>
 
         <div class="item">
-            <div class="item-info">
-                <div class="item-title">Katta qallama (800g)</div>
+            <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300" class="item-img" alt="Katta qallama">
+            <div class="item-details">
+                <div class="item-title">Katta qallama</div>
                 <div class="item-price">20 000 so'm</div>
             </div>
             <div class="counter">
@@ -85,44 +103,21 @@
         </div>
     </div>
 
-    <!-- 2. MIJOZ MA'LUMOTLARI -->
+    <!-- 2. VAQTNI TANLASH -->
     <div class="card">
-        <h3>👤 Xaridor ma'lumotlari:</h3>
-        
-        <div class="form-group">
-            <label>Ism va Familiya:</label>
-            <input type="text" id="userName" placeholder="Ismingizni kiriting">
-        </div>
-
-        <div class="form-group">
-            <label>Telefon raqam:</label>
-            <input type="tel" id="userPhone" placeholder="+998901234567">
-        </div>
-
-        <div class="form-group">
-            <label>Siz bilan qanday bog'lanaylik?</label>
-            <div class="btn-grid" id="prefGroup">
-                <div class="opt-btn active" onclick="selectPref('Telegram', this)">Telegram</div>
-                <div class="opt-btn" onclick="selectPref('Telefon', this)">Telefon qo'ng'irog'i</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. VAQTNI TANLASH -->
-    <div class="card">
-        <h3>⏰ Olib ketish / Yetkazish vaqti:</h3>
+        <h3>⏰ Vaqtni tanlang</h3>
         <div class="btn-grid" id="timeGroup">
             <div class="opt-btn" onclick="selectTime('06:00', this)">06:00</div>
             <div class="opt-btn" onclick="selectTime('12:00', this)">12:00</div>
             <div class="opt-btn" onclick="selectTime('18:00', this)">18:00</div>
             <div class="opt-btn" onclick="selectTime('custom', this)">⏱ Boshqa vaqt</div>
         </div>
-        <input type="text" id="customTimeInput" class="hidden" placeholder="Vaqtni kiriting (Masalan: 14:30)">
+        <input type="text" id="customTimeInput" class="hidden" placeholder="Masalan: 15:30 yoki soat 4 larda">
     </div>
 
-    <!-- 4. FILIAL VA YETKAZISH -->
+    <!-- 3. FILIAL / MANZIL -->
     <div class="card">
-        <h3>📍 Qaysi filialdan olib ketasiz?</h3>
+        <h3>📍 Manzil yoki Filial</h3>
         <div class="btn-grid" id="branchGroup">
             <div class="opt-btn" onclick="selectBranch('Bozorcha', this)">Bozorcha</div>
             <div class="opt-btn" onclick="selectBranch('Markaziy', this)">Markaziy</div>
@@ -131,29 +126,58 @@
         </div>
 
         <!-- Boshqa joy tanlanganda -->
-        <div id="customLocationOptions" class="hidden" style="margin-top: 10px;">
-            <label>Yetkazib berish usulini tanlang:</label>
+        <div id="customLocationOptions" class="hidden" style="margin-top: 12px;">
+            <label style="font-size: 13px; font-weight: 600;">Yetkazib berish usuli:</label>
             <div class="btn-grid">
                 <div class="opt-btn" onclick="chooseLocationType('manual')">✍️ Qo'lda kiritish</div>
                 <div class="opt-btn" onclick="chooseLocationType('geo')">📍 Geolokatsiya</div>
             </div>
 
-            <input type="text" id="manualAddressInput" class="hidden" placeholder="Aniq manzilni kiriting (Ko'cha, uy raqami)">
+            <input type="text" id="manualAddressInput" class="hidden" placeholder="Ko'cha nomi va uy raqami...">
             <p id="geoStatus" style="font-size: 13px; color: #28a745; margin-top: 8px; font-weight: bold;"></p>
         </div>
     </div>
 
-    <button class="submit-btn" onclick="submitOrder()">🛍 Buyurtmani tasdiqlash</button>
+    <button class="main-btn" onclick="openCustomerModal()">🛍 Buyurtmani rasmiylashtirish</button>
+
+    <!-- PUSH-UP POPUP: XARIDOR MA'LUMOTLARI -->
+    <div class="modal-overlay" id="customerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>👤 Ma'lumotlaringizni kiriting</h3>
+                <button class="close-btn" onclick="closeCustomerModal()">&times;</button>
+            </div>
+
+            <div class="form-group">
+                <label>Ism va Familiya:</label>
+                <input type="text" id="userName" placeholder="Ismingizni yozing">
+            </div>
+
+            <div class="form-group">
+                <label>Telefon raqam:</label>
+                <input type="tel" id="userPhone" placeholder="+998901234567">
+            </div>
+
+            <div class="form-group">
+                <label>Siz bilan qanday bog'lanaylik?</label>
+                <div class="btn-grid" id="prefGroup">
+                    <div class="opt-btn active" onclick="selectPref('Telegram', this)">Telegram</div>
+                    <div class="opt-btn" onclick="selectPref('Telefon', this)">Telefon qo'ng'irog'i</div>
+                </div>
+            </div>
+
+            <button class="main-btn" style="margin-top: 10px;" onclick="submitFinalOrder()">✅ Tasdiqlash va Yuborish</button>
+        </div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Savat holati
         const cart = {
-            p1: { name: 'Kichik qallama (300g)', qty: 0, price: 8000 },
-            p2: { name: "O'rtacha qallama (500g)", qty: 0, price: 14000 },
-            p3: { name: 'Katta qallama (800g)', qty: 0, price: 20000 }
+            p1: { name: 'Kichik qallama', qty: 0, price: 8000 },
+            p2: { name: "O'rtacha qallama", qty: 0, price: 14000 },
+            p3: { name: 'Katta qallama', qty: 0, price: 20000 }
         };
 
         let selectedPref = 'Telegram';
@@ -161,13 +185,11 @@
         let selectedBranch = '';
         let userLocationGeo = '';
 
-        // Telegramdan foydalanuvchi ismini avto to'ldirish
         if (tg.initDataUnsafe?.user) {
             const u = tg.initDataUnsafe.user;
             document.getElementById('userName').value = (u.first_name || '') + ' ' + (u.last_name || '');
         }
 
-        // Taom sonini o'zgartirish
         function changeQty(id, delta, price) {
             if (cart[id].qty + delta >= 0) {
                 cart[id].qty += delta;
@@ -176,23 +198,18 @@
             }
         }
 
-        // Umumiy summani hisoblash
         function updateTotal() {
             let total = 0;
-            for (const key in cart) {
-                total += cart[key].qty * cart[key].price;
-            }
+            for (const key in cart) { total += cart[key].qty * cart[key].price; }
             document.getElementById('totalPrice').innerText = total.toLocaleString('uz-UZ') + " so'm";
         }
 
-        // Aloqa usuli
         function selectPref(pref, el) {
             document.querySelectorAll('#prefGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
             selectedPref = pref;
         }
 
-        // Vaqt tanlash
         function selectTime(val, el) {
             document.querySelectorAll('#timeGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
@@ -206,7 +223,6 @@
             }
         }
 
-        // Filial tanlash
         function selectBranch(val, el) {
             document.querySelectorAll('#branchGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
@@ -223,7 +239,6 @@
             }
         }
 
-        // Boshqa joy optionlari
         function chooseLocationType(type) {
             const manualInput = document.getElementById('manualAddressInput');
             const geoStatus = document.getElementById('geoStatus');
@@ -241,23 +256,53 @@
                     navigator.geolocation.getCurrentPosition(
                         (pos) => {
                             userLocationGeo = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
-                            geoStatus.innerText = "✅ Geolokatsiyangiz aniqlandi!";
+                            geoStatus.innerText = "✅ Geolokatsiya olindi!";
                         },
                         (err) => {
                             alert("Geolokatsiyani olishga ruxsat berilmadi.");
-                            geoStatus.innerText = "❌ Geolokatsiya olinmadi. Manzilni qo'lda kiriting.";
+                            geoStatus.innerText = "❌ Manzilni qo'lda kiriting.";
                             manualInput.classList.remove('hidden');
                         }
                     );
                 } else {
-                    alert("Qurilrangiz geolokatsiyani qo'llab-quvvatlamaydi.");
+                    alert("Qurilma geolokatsiyani qo'llab-quvvatlamaydi.");
                 }
             }
         }
 
-        // Buyurtmani yuborish
-        async function submitOrder() {
-            // 1. Mahsulotlar
+        // PUSH-UP MODALNI OCHISH
+        function openCustomerModal() {
+            let hasItems = Object.values(cart).some(item => item.qty > 0);
+            if (!hasItems) {
+                alert("Iltimos, kamida bitta qallama tanlang!");
+                return;
+            }
+            if (!selectedTime) {
+                alert("Iltimos, vaqtni tanlang!");
+                return;
+            }
+            if (!selectedBranch) {
+                alert("Iltimos, filial yoki manzilni tanlang!");
+                return;
+            }
+
+            document.getElementById('customerModal').classList.add('active');
+        }
+
+        function closeCustomerModal() {
+            document.getElementById('customerModal').classList.remove('active');
+        }
+
+        // BUYURTMANI YUBORISH
+        async function submitFinalOrder() {
+            const name = document.getElementById('userName').value.trim();
+            const phone = document.getElementById('userPhone').value.trim();
+
+            if (!name || !phone) {
+                alert("Iltimos, ismingiz va telefon raqamingizni kiriting!");
+                return;
+            }
+
             let itemsArr = [];
             let totalSum = 0;
             for (const k in cart) {
@@ -267,29 +312,12 @@
                 }
             }
 
-            if (itemsArr.length === 0) {
-                alert("Iltimos, kamida bitta mahsulot tanlang!");
-                return;
-            }
-
-            // 2. Ism va Tel
-            const name = document.getElementById('userName').value.trim();
-            const phone = document.getElementById('userPhone').value.trim();
-            if (!name || !phone) {
-                alert("Iltimos, ismingiz va telefon raqamingizni kiriting!");
-                return;
-            }
-
-            // 3. Vaqt
             let finalTime = selectedTime;
             if (selectedTime === 'custom') {
                 finalTime = document.getElementById('customTimeInput').value.trim();
-                if (!finalTime) { alert("Iltimos, xohlagan vaqtingizni kiriting!"); return; }
-            } else if (!selectedTime) {
-                alert("Iltimos, vaqtni tanlang!"); return;
+                if (!finalTime) { alert("Iltimos, vaqtni kiriting!"); return; }
             }
 
-            // 4. Filial / Manzil
             let finalBranch = selectedBranch;
             if (selectedBranch === 'custom') {
                 const manualAddr = document.getElementById('manualAddressInput').value.trim();
@@ -298,10 +326,9 @@
                 } else if (manualAddr) {
                     finalBranch = `🚚 Yetkazish (Manzil: ${manualAddr})`;
                 } else {
-                    alert("Iltimos, manzilni kiriting yoki geolokatsiya yuboring!"); return;
+                    alert("Iltimos, manzilni kiriting yoki geolokatsiyani yuboring!");
+                    return;
                 }
-            } else if (!selectedBranch) {
-                alert("Iltimos, filialni tanlang!"); return;
             }
 
             const user = tg.initDataUnsafe?.user || {};
