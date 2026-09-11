@@ -6,100 +6,224 @@
     <title>Qallama Do'koni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; padding: 15px; background-color: #f4f4f9; }
-        .section { margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 8px; background: #f8f9fa; cursor: pointer; flex: 1; min-width: 120px; text-align: center; }
-        .btn.active { background: #0088cc; color: #fff; border-color: #0088cc; }
-        input[type="text"] { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; color: #333; padding: 12px; }
+        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        h3 { font-size: 16px; margin-bottom: 12px; color: #222; }
+        
+        /* Item styling */
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .item:last-child { border-bottom: none; }
+        .item-info { flex: 1; }
+        .item-title { font-weight: 600; font-size: 15px; }
+        .item-price { font-size: 13px; color: #666; margin-top: 2px; }
+        .counter { display: flex; align-items: center; gap: 10px; }
+        .btn-counter { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #0088cc; background: #f0f8ff; color: #0088cc; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .count-val { font-weight: bold; min-width: 16px; text-align: center; }
+
+        /* Form elements */
+        input[type="text"], input[type="tel"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; margin-top: 6px; outline: none; }
+        input[type="text"]:focus, input[type="tel"]:focus { border-color: #0088cc; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 13px; font-weight: 600; color: #555; }
+
+        /* Button options */
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+        .opt-btn { padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; font-size: 13px; text-align: center; cursor: pointer; font-weight: 500; }
+        .opt-btn.active { background: #0088cc; color: #fff; border-color: #0088cc; }
+
         .hidden { display: none; }
-        .order-btn { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .total-box { font-size: 18px; font-weight: bold; text-align: space-between; display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #eee; }
+        .submit-btn { width: 100%; padding: 14px; background: #28a745; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- 1. VAQTNI TANLASH BO'LIMI -->
-    <div class="section">
-        <h3>⏰ Olib ketish/Yetkazish vaqti:</h3>
-        <div class="btn-group" id="timeGroup">
-            <div class="btn" onclick="selectTime('06:00', this)">06:00</div>
-            <div class="btn" onclick="selectTime('12:00', this)">12:00</div>
-            <div class="btn" onclick="selectTime('18:00', this)">18:00</div>
-            <div class="btn" onclick="selectTime('custom', this)">⏱ Boshqa vaqt</div>
+    <!-- 1. TAOMLAR MENYUSI -->
+    <div class="card">
+        <h3>🫓 Menyudagi taomlar:</h3>
+        
+        <div class="item">
+            <div class="item-info">
+                <div class="item-title">Kichik qallama (300g)</div>
+                <div class="item-price">8 000 so'm</div>
+            </div>
+            <div class="counter">
+                <button class="btn-counter" onclick="changeQty('p1', -1, 8000)">-</button>
+                <span class="count-val" id="qty-p1">0</span>
+                <button class="btn-counter" onclick="changeQty('p1', 1, 8000)">+</button>
+            </div>
         </div>
-        <input type="text" id="customTimeInput" class="hidden" placeholder="Vaqtni kiriting (Masalan: 14:30 yoki soat 3 da)">
+
+        <div class="item">
+            <div class="item-info">
+                <div class="item-title">O'rtacha qallama (500g)</div>
+                <div class="item-price">14 000 so'm</div>
+            </div>
+            <div class="counter">
+                <button class="btn-counter" onclick="changeQty('p2', -1, 14000)">-</button>
+                <span class="count-val" id="qty-p2">0</span>
+                <button class="btn-counter" onclick="changeQty('p2', 1, 14000)">+</button>
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-info">
+                <div class="item-title">Katta qallama (800g)</div>
+                <div class="item-price">20 000 so'm</div>
+            </div>
+            <div class="counter">
+                <button class="btn-counter" onclick="changeQty('p3', -1, 20000)">-</button>
+                <span class="count-val" id="qty-p3">0</span>
+                <button class="btn-counter" onclick="changeQty('p3', 1, 20000)">+</button>
+            </div>
+        </div>
+
+        <div class="total-box">
+            <span>Jami summa:</span>
+            <span id="totalPrice">0 so'm</span>
+        </div>
     </div>
 
-    <!-- 2. FILIAL / MANZILNI TANLASH BO'LIMI -->
-    <div class="section">
-        <h3>📍 Qaysi filialdan olib ketasiz?</h3>
-        <div class="btn-group" id="branchGroup">
-            <div class="btn" onclick="selectBranch('Bozorcha', this)">Bozorcha</div>
-            <div class="btn" onclick="selectBranch('Markaziy', this)">Markaziy</div>
-            <div class="btn" onclick="selectBranch('Vokzal', this)">Vokzal</div>
-            <div class="btn" onclick="selectBranch('custom', this)">📍 Boshqa joy</div>
+    <!-- 2. MIJOZ MA'LUMOTLARI -->
+    <div class="card">
+        <h3>👤 Xaridor ma'lumotlari:</h3>
+        
+        <div class="form-group">
+            <label>Ism va Familiya:</label>
+            <input type="text" id="userName" placeholder="Ismingizni kiriting">
         </div>
 
-        <!-- Boshqa joy tanlanganda chiqadigan optionlar -->
-        <div id="customLocationOptions" class="hidden" style="margin-top: 15px;">
-            <p><b>Yetkazib berish manzilini tanlang:</b></p>
-            <div class="btn-group">
-                <div class="btn" onclick="chooseLocationType('manual')">✍️ Qo'lda kiritish</div>
-                <div class="btn" onclick="chooseLocationType('geo')">📍 Geolokatsiya jo'natish</div>
+        <div class="form-group">
+            <label>Telefon raqam:</label>
+            <input type="tel" id="userPhone" placeholder="+998901234567">
+        </div>
+
+        <div class="form-group">
+            <label>Siz bilan qanday bog'lanaylik?</label>
+            <div class="btn-grid" id="prefGroup">
+                <div class="opt-btn active" onclick="selectPref('Telegram', this)">Telegram</div>
+                <div class="opt-btn" onclick="selectPref('Telefon', this)">Telefon qo'ng'irog'i</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. VAQTNI TANLASH -->
+    <div class="card">
+        <h3>⏰ Olib ketish / Yetkazish vaqti:</h3>
+        <div class="btn-grid" id="timeGroup">
+            <div class="opt-btn" onclick="selectTime('06:00', this)">06:00</div>
+            <div class="opt-btn" onclick="selectTime('12:00', this)">12:00</div>
+            <div class="opt-btn" onclick="selectTime('18:00', this)">18:00</div>
+            <div class="opt-btn" onclick="selectTime('custom', this)">⏱ Boshqa vaqt</div>
+        </div>
+        <input type="text" id="customTimeInput" class="hidden" placeholder="Vaqtni kiriting (Masalan: 14:30)">
+    </div>
+
+    <!-- 4. FILIAL VA YETKAZISH -->
+    <div class="card">
+        <h3>📍 Qaysi filialdan olib ketasiz?</h3>
+        <div class="btn-grid" id="branchGroup">
+            <div class="opt-btn" onclick="selectBranch('Bozorcha', this)">Bozorcha</div>
+            <div class="opt-btn" onclick="selectBranch('Markaziy', this)">Markaziy</div>
+            <div class="opt-btn" onclick="selectBranch('Vokzal', this)">Vokzal</div>
+            <div class="opt-btn" onclick="selectBranch('custom', this)">📍 Boshqa joy</div>
+        </div>
+
+        <!-- Boshqa joy tanlanganda -->
+        <div id="customLocationOptions" class="hidden" style="margin-top: 10px;">
+            <label>Yetkazib berish usulini tanlang:</label>
+            <div class="btn-grid">
+                <div class="opt-btn" onclick="chooseLocationType('manual')">✍️ Qo'lda kiritish</div>
+                <div class="opt-btn" onclick="chooseLocationType('geo')">📍 Geolokatsiya</div>
             </div>
 
-            <!-- 1-Option: Qo'lda kiritish inputi -->
-            <input type="text" id="manualAddressInput" class="hidden" placeholder="Aniq manzilingizni kiriting (Masalan: Navoiy ko'chasi, 25-uy)">
-
-            <!-- 2-Option: Geolokatsiya holati matni -->
-            <p id="geoStatus" style="font-size: 13px; color: green; margin-top: 8px;"></p>
+            <input type="text" id="manualAddressInput" class="hidden" placeholder="Aniq manzilni kiriting (Ko'cha, uy raqami)">
+            <p id="geoStatus" style="font-size: 13px; color: #28a745; margin-top: 8px; font-weight: bold;"></p>
         </div>
     </div>
 
-    <button class="order-btn" onclick="submitOrder()">🛍 Buyurtmani tasdiqlash</button>
+    <button class="submit-btn" onclick="submitOrder()">🛍 Buyurtmani tasdiqlash</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // Savat holati
+        const cart = {
+            p1: { name: 'Kichik qallama (300g)', qty: 0, price: 8000 },
+            p2: { name: "O'rtacha qallama (500g)", qty: 0, price: 14000 },
+            p3: { name: 'Katta qallama (800g)', qty: 0, price: 20000 }
+        };
+
+        let selectedPref = 'Telegram';
         let selectedTime = '';
         let selectedBranch = '';
-        let userLocationGeo = ''; // GPS koordinatalari uchun
+        let userLocationGeo = '';
 
-        // VAQT TANLASH MANTIQLARI
-        function selectTime(timeVal, el) {
-            document.querySelectorAll('#timeGroup .btn').forEach(b => b.classList.remove('active'));
+        // Telegramdan foydalanuvchi ismini avto to'ldirish
+        if (tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            document.getElementById('userName').value = (u.first_name || '') + ' ' + (u.last_name || '');
+        }
+
+        // Taom sonini o'zgartirish
+        function changeQty(id, delta, price) {
+            if (cart[id].qty + delta >= 0) {
+                cart[id].qty += delta;
+                document.getElementById(`qty-${id}`).innerText = cart[id].qty;
+                updateTotal();
+            }
+        }
+
+        // Umumiy summani hisoblash
+        function updateTotal() {
+            let total = 0;
+            for (const key in cart) {
+                total += cart[key].qty * cart[key].price;
+            }
+            document.getElementById('totalPrice').innerText = total.toLocaleString('uz-UZ') + " so'm";
+        }
+
+        // Aloqa usuli
+        function selectPref(pref, el) {
+            document.querySelectorAll('#prefGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
+            selectedPref = pref;
+        }
 
+        // Vaqt tanlash
+        function selectTime(val, el) {
+            document.querySelectorAll('#timeGroup .opt-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
             const customInput = document.getElementById('customTimeInput');
-            if (timeVal === 'custom') {
+            if (val === 'custom') {
                 customInput.classList.remove('hidden');
                 selectedTime = 'custom';
             } else {
                 customInput.classList.add('hidden');
-                selectedTime = timeVal;
+                selectedTime = val;
             }
         }
 
-        // FILIAL TANLASH MANTIQLARI
-        function selectBranch(branchVal, el) {
-            document.querySelectorAll('#branchGroup .btn').forEach(b => b.classList.remove('active'));
+        // Filial tanlash
+        function selectBranch(val, el) {
+            document.querySelectorAll('#branchGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
-
-            const customLocBox = document.getElementById('customLocationOptions');
-            if (branchVal === 'custom') {
-                customLocBox.classList.remove('hidden');
+            const customBox = document.getElementById('customLocationOptions');
+            if (val === 'custom') {
+                customBox.classList.remove('hidden');
                 selectedBranch = 'custom';
             } else {
-                customLocBox.classList.add('hidden');
+                customBox.classList.add('hidden');
                 document.getElementById('manualAddressInput').classList.add('hidden');
                 document.getElementById('geoStatus').innerText = '';
-                selectedBranch = branchVal;
+                selectedBranch = val;
                 userLocationGeo = '';
             }
         }
 
-        // BOSHQA JOY ICHIDAGI OPTIONLAR (Qo'lda yoki Geo)
+        // Boshqa joy optionlari
         function chooseLocationType(type) {
             const manualInput = document.getElementById('manualAddressInput');
             const geoStatus = document.getElementById('geoStatus');
@@ -115,72 +239,86 @@
 
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            userLocationGeo = `https://maps.google.com/?q=${lat},${lon}`;
+                        (pos) => {
+                            userLocationGeo = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
                             geoStatus.innerText = "✅ Geolokatsiyangiz aniqlandi!";
                         },
-                        (error) => {
-                            alert("Geolokatsiyani olishga ruxsat berilmadi yoki aniqlab bo'lmadi.");
-                            geoStatus.innerText = "❌ Geolokatsiya olinmadi. Iltimos, manzilni qo'lda kiriting.";
+                        (err) => {
+                            alert("Geolokatsiyani olishga ruxsat berilmadi.");
+                            geoStatus.innerText = "❌ Geolokatsiya olinmadi. Manzilni qo'lda kiriting.";
                             manualInput.classList.remove('hidden');
                         }
                     );
                 } else {
-                    alert("Qurilmangizda geolokatsiya funksiyasi qo'llab-quvvatlanmaydi.");
+                    alert("Qurilrangiz geolokatsiyani qo'llab-quvvatlamaydi.");
                 }
             }
         }
 
-        // BUYURTMANI YUBORISH
+        // Buyurtmani yuborish
         async function submitOrder() {
-            // Vaqtni aniqlash
-            let finalTime = selectedTime;
-            if (selectedTime === 'custom') {
-                finalTime = document.getElementById('customTimeInput').value.trim();
-                if (!finalTime) {
-                    alert("Iltimos, o'zingiz xohlagan vaqtni kiriting!");
-                    return;
+            // 1. Mahsulotlar
+            let itemsArr = [];
+            let totalSum = 0;
+            for (const k in cart) {
+                if (cart[k].qty > 0) {
+                    itemsArr.push(`• ${cart[k].name}: ${cart[k].qty} ta`);
+                    totalSum += cart[k].qty * cart[k].price;
                 }
-            } else if (!selectedTime) {
-                alert("Iltimos, vaqtni tanlang!");
+            }
+
+            if (itemsArr.length === 0) {
+                alert("Iltimos, kamida bitta mahsulot tanlang!");
                 return;
             }
 
-            // Filial / Manzilni aniqlash
+            // 2. Ism va Tel
+            const name = document.getElementById('userName').value.trim();
+            const phone = document.getElementById('userPhone').value.trim();
+            if (!name || !phone) {
+                alert("Iltimos, ismingiz va telefon raqamingizni kiriting!");
+                return;
+            }
+
+            // 3. Vaqt
+            let finalTime = selectedTime;
+            if (selectedTime === 'custom') {
+                finalTime = document.getElementById('customTimeInput').value.trim();
+                if (!finalTime) { alert("Iltimos, xohlagan vaqtingizni kiriting!"); return; }
+            } else if (!selectedTime) {
+                alert("Iltimos, vaqtni tanlang!"); return;
+            }
+
+            // 4. Filial / Manzil
             let finalBranch = selectedBranch;
             if (selectedBranch === 'custom') {
                 const manualAddr = document.getElementById('manualAddressInput').value.trim();
                 if (userLocationGeo) {
-                    finalBranch = `🚚 Yetkazib berish (Geolokatsiya: ${userLocationGeo})`;
+                    finalBranch = `🚚 Yetkazish (Geo: ${userLocationGeo})`;
                 } else if (manualAddr) {
-                    finalBranch = `🚚 Yetkazib berish (Manzil: ${manualAddr})`;
+                    finalBranch = `🚚 Yetkazish (Manzil: ${manualAddr})`;
                 } else {
-                    alert("Iltimos, manzilni kiriting yoki geolokatsiyangizni yuboring!");
-                    return;
+                    alert("Iltimos, manzilni kiriting yoki geolokatsiya yuboring!"); return;
                 }
             } else if (!selectedBranch) {
-                alert("Iltimos, filialni tanlang!");
-                return;
+                alert("Iltimos, filialni tanlang!"); return;
             }
 
-            // Telegram user ma'lumotlari
             const user = tg.initDataUnsafe?.user || {};
 
             const orderPayload = {
                 userId: user.id || null,
-                userName: user.first_name || 'Mijoz',
+                userName: name,
                 userHandle: user.username || '',
-                phone: "+998901234567", // Buni formangizdagi tel raqam inputidan olsangiz bo'ladi
+                phone: phone,
+                contactPreference: selectedPref,
                 time: finalTime,
                 branch: finalBranch,
                 date: new Date().toLocaleDateString('uz-UZ'),
-                items: "• Kichik qallama (300g): 2 ta", // Mini App dagi tanlangan mahsulotlar
-                totalPrice: "32 000"
+                items: itemsArr.join('\n'),
+                totalPrice: totalSum.toLocaleString('uz-UZ')
             };
 
-            // Serverga API so'rov yuborish
             try {
                 const res = await fetch('https://test-regime.onrender.com/api/order', {
                     method: 'POST',
@@ -190,12 +328,11 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    tg.close(); // Mini App ni yopish
+                    tg.close();
                 } else {
-                    alert("Xatolik yuz berdi. Qayta urinib ko'ring.");
+                    alert("Xatolik yuz berdi!");
                 }
             } catch (err) {
-                console.error(err);
                 alert("Server bilan aloqa uzildi!");
             }
         }
