@@ -6,510 +6,197 @@
     <title>Qallama Do'koni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
-            color: #222222;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-        h1 { font-size: 20px; margin-bottom: 12px; text-align: center; margin-top: 40px; }
-        
-        /* 🔔 YUQORI O'NG BURCHAKDAGI KICHIK QO'NG'IROQCHA TUGMASI */
-        .notification-bell-btn {
-            position: fixed;
-            top: 12px;
-            right: 12px;
-            width: 38px;
-            height: 38px;
-            background-color: #0088cc;
-            color: #ffffff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            z-index: 2000;
-            font-size: 18px;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-        .notification-bell-btn:hover {
-            transform: scale(1.1);
-            background-color: #0077b5;
-        }
-        .bell-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 9px;
-            height: 9px;
-            background-color: #ff3b30;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-        }
-
-        /* 📢 QALQIB CHIQUVCHI BILDIRISHNOMA OYNASI (POP-UP) */
-        .notification-popup {
-            position: fixed;
-            top: 58px;
-            right: 12px;
-            width: 320px;
-            max-width: calc(100vw - 24px);
-            background: #ffffff;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-            padding: 16px;
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 2000;
-            animation: popupSlideDown 0.25s ease-out;
-        }
-        @keyframes popupSlideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .popup-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-            font-weight: bold;
-            font-size: 14px;
-            color: #333;
-        }
-        .popup-close-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #888;
-        }
-
-        .option-title {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        .option-btn {
-            width: 100%;
-            background-color: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: left;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-            margin-bottom: 6px;
-        }
-        .option-btn:hover {
-            background-color: #eef7ff;
-            border-color: #0088cc;
-        }
-
-        .phone-input-box {
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            background-color: #f0f7ff;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 4px;
-        }
-        .phone-input-box label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #0088cc;
-        }
-        .phone-input-group {
-            display: flex;
-            gap: 6px;
-        }
-        .phone-input-group input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 13px;
-            outline: none;
-        }
-        .btn-confirm {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* MAHSULOTLAR VA BUYURTMA BO'LIMI */
-        .status-checker {
-            width: 100%; max-width: 400px; background: #ffffff;
-            padding: 14px; border-radius: 12px; margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;
-        }
-        .status-checker-title { font-weight: bold; font-size: 15px; margin-bottom: 8px; }
-        .checker-input-group { display: flex; gap: 8px; }
-        .checker-input {
-            flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc;
-            font-size: 14px; outline: none;
-        }
-        .btn-check {
-            background-color: #0088cc; color: white; border: none;
-            padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-        .status-result {
-            margin-top: 10px; padding: 10px; border-radius: 8px;
-            background-color: #eef7ff; font-weight: bold; display: none; font-size: 14px;
-        }
-
-        .products-container { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; }
-        .product-card {
-            background-color: #ffffff; border-radius: 12px; padding: 16px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        .product-img { width: 100%; max-width: 180px; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-        .product-title { font-size: 18px; font-weight: bold; }
-        .product-weight { font-size: 13px; color: #777; margin-bottom: 6px; }
-        .product-price { font-size: 16px; color: #0088cc; font-weight: bold; margin-bottom: 12px; }
-        .counter-container { display: flex; align-items: center; justify-content: center; gap: 12px; }
-        .btn-counter {
-            background-color: #0088cc; color: white; border: none;
-            width: 36px; height: 36px; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer;
-        }
-        .count-display { font-size: 18px; font-weight: bold; min-width: 24px; }
-        .order-summary {
-            margin-top: 20px; width: 100%; max-width: 400px;
-            background-color: #ffffff; padding: 16px; border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .form-group { margin-bottom: 16px; text-align: left; }
-        .form-label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 6px; }
-        .form-input, .form-select {
-            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;
-            font-size: 15px; outline: none; background-color: #fff; color: #000;
-        }
-        .total-price { font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: center; }
-        .btn-order {
-            background-color: #28a745; color: #fff; border: none; width: 100%;
-            padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-        }
-        .btn-order:disabled { background-color: #ccc; cursor: not-allowed; }
+        body { font-family: Arial, sans-serif; padding: 15px; background-color: #f4f4f9; }
+        .section { margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .btn { padding: 10px 15px; border: 1px solid #ccc; border-radius: 8px; background: #f8f9fa; cursor: pointer; flex: 1; min-width: 120px; text-align: center; }
+        .btn.active { background: #0088cc; color: #fff; border-color: #0088cc; }
+        input[type="text"] { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .hidden { display: none; }
+        .order-btn { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- 🔔 TEPADAGI KICHIK SUZUVCHI QO'NG'IROQCHA -->
-    <div class="notification-bell-btn" onclick="toggleNotificationPopup()">
-        🔔
-        <span class="bell-badge" id="bell-badge"></span>
+    <!-- 1. VAQTNI TANLASH BO'LIMI -->
+    <div class="section">
+        <h3>⏰ Olib ketish/Yetkazish vaqti:</h3>
+        <div class="btn-group" id="timeGroup">
+            <div class="btn" onclick="selectTime('06:00', this)">06:00</div>
+            <div class="btn" onclick="selectTime('12:00', this)">12:00</div>
+            <div class="btn" onclick="selectTime('18:00', this)">18:00</div>
+            <div class="btn" onclick="selectTime('custom', this)">⏱ Boshqa vaqt</div>
+        </div>
+        <input type="text" id="customTimeInput" class="hidden" placeholder="Vaqtni kiriting (Masalan: 14:30 yoki soat 3 da)">
     </div>
 
-    <!-- 📢 QALQIB CHIQUVCHI OYNA (POP-UP) -->
-    <div class="notification-popup" id="notification-popup">
-        <div class="popup-header">
-            <span>🔔 Aloqa va Bildirishnoma</span>
-            <button class="popup-close-btn" onclick="toggleNotificationPopup()">✕</button>
+    <!-- 2. FILIAL / MANZILNI TANLASH BO'LIMI -->
+    <div class="section">
+        <h3>📍 Qaysi filialdan olib ketasiz?</h3>
+        <div class="btn-group" id="branchGroup">
+            <div class="btn" onclick="selectBranch('Bozorcha', this)">Bozorcha</div>
+            <div class="btn" onclick="selectBranch('Markaziy', this)">Markaziy</div>
+            <div class="btn" onclick="selectBranch('Vokzal', this)">Vokzal</div>
+            <div class="btn" onclick="selectBranch('custom', this)">📍 Boshqa joy</div>
         </div>
 
-        <div class="option-title">Xabar olish usulini tanlang:</div>
-
-        <!-- 1. SMS xabar -->
-        <button class="option-btn" onclick="selectOption('sms')">
-            💬 1. Menga SMS xabar yuboring
-        </button>
-
-        <!-- 2. Telegram xabar -->
-        <button class="option-btn" onclick="selectOption('telegram')">
-            ✈️ 2. Menga Telegram'dan xabar yuboring
-        </button>
-
-        <!-- 3. Qo'ng'iroq qilish -->
-        <button class="option-btn" onclick="selectOption('call')">
-            📞 3. Menga qo'ng'iroq qiling
-        </button>
-
-        <!-- SMS / QO'NG'IROQ UCHUN TELEFON AUTOFILL BO'LIMI -->
-        <div class="phone-input-box" id="phone-input-box">
-            <label id="phone-box-label">Telefon raqamingiz:</label>
-            <div class="phone-input-group">
-                <input type="tel" id="popup-phone-input" placeholder="+998901234567" autocomplete="tel">
-                <button class="btn-confirm" onclick="saveContactPreference()">Saqlash</button>
+        <!-- Boshqa joy tanlanganda chiqadigan optionlar -->
+        <div id="customLocationOptions" class="hidden" style="margin-top: 15px;">
+            <p><b>Yetkazib berish manzilini tanlang:</b></p>
+            <div class="btn-group">
+                <div class="btn" onclick="chooseLocationType('manual')">✍️ Qo'lda kiritish</div>
+                <div class="btn" onclick="chooseLocationType('geo')">📍 Geolokatsiya jo'natish</div>
             </div>
+
+            <!-- 1-Option: Qo'lda kiritish inputi -->
+            <input type="text" id="manualAddressInput" class="hidden" placeholder="Aniq manzilingizni kiriting (Masalan: Navoiy ko'chasi, 25-uy)">
+
+            <!-- 2-Option: Geolokatsiya holati matni -->
+            <p id="geoStatus" style="font-size: 13px; color: green; margin-top: 8px;"></p>
         </div>
     </div>
 
-    <h1 id="user-greeting">Mazzali Qallamalar!</h1>
-
-    <!-- 🔍 BUYURTMA STATUSINI TEKSHIRISH BO'LIMI -->
-    <div class="status-checker">
-        <div class="status-checker-title">🔍 Buyurtma holatini tekshirish</div>
-        <div class="checker-input-group">
-            <input type="number" id="check-order-id" class="checker-input" placeholder="Buyurtma raqami">
-            <button class="btn-check" onclick="checkOrderStatus()">Tekshirish</button>
-        </div>
-        <div id="status-result" class="status-result"></div>
-    </div>
-
-    <div class="products-container">
-        <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Kichik">
-            <div class="product-title">Kichik qallama</div>
-            <div class="product-weight">O'lchami: 300 gramm</div>
-            <div class="product-price">8,000 so'm</div>
-            <div class="counter-container">
-                <button class="btn-counter" onclick="changeQuantity('small', -1)">-</button>
-                <span class="count-display" id="count-small">0</span>
-                <button class="btn-counter" onclick="changeQuantity('small', 1)">+</button>
-            </div>
-        </div>
-
-        <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Standard">
-            <div class="product-title">Standard qallama</div>
-            <div class="product-weight">O'lchami: 550 gramm</div>
-            <div class="product-price">10,000 so'm</div>
-            <div class="counter-container">
-                <button class="btn-counter" onclick="changeQuantity('standard', -1)">-</button>
-                <span class="count-display" id="count-standard">0</span>
-                <button class="btn-counter" onclick="changeQuantity('standard', 1)">+</button>
-            </div>
-        </div>
-
-        <div class="product-card">
-            <img class="product-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsDLbDfZFJ4A4cX5P9amgLjd7SG-UoIzkjnyhvMLbaGW8IQDQdJ8aHHyA&s=10" alt="Katta">
-            <div class="product-title">Katta qallama</div>
-            <div class="product-weight">O'lchami: 700 gramm</div>
-            <div class="product-price">15,000 so'm</div>
-            <div class="counter-container">
-                <button class="btn-counter" onclick="changeQuantity('large', -1)">-</button>
-                <span class="count-display" id="count-large">0</span>
-                <button class="btn-counter" onclick="changeQuantity('large', 1)">+</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="order-summary">
-        <div class="form-group">
-            <label class="form-label" for="delivery-date">📅 Qaysi kunga kerak?</label>
-            <input type="date" id="delivery-date" class="form-input" onchange="updateTotal()">
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="delivery-time">⏰ Soat nechida olib ketasiz?</label>
-            <select id="delivery-time" class="form-select" onchange="updateTotal()">
-                <option value="" disabled selected>Vaqtni tanlang...</option>
-                <option value="06:00">06:00 da</option>
-                <option value="07:00">07:00 da</option>
-                <option value="10:00">10:00 da</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="branch-select">📍 Qaysi filialdan olib ketasiz?</label>
-            <select id="branch-select" class="form-select" onchange="updateTotal()">
-                <option value="" disabled selected>Filialni tanlang...</option>
-                <option value="Bozorcha">Bozorcha</option>
-                <option value="Chinor tagi">Chinor tagi</option>
-                <option value="Avtovokzal">Avtovokzal</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label class="form-label" for="phone-number">📞 Telefon raqamingiz:</label>
-            <input type="tel" id="phone-number" class="form-input" placeholder="+998901234567" autocomplete="tel">
-        </div>
-
-        <div class="total-price" id="total-text">Jami: 0 so'm</div>
-        <button class="btn-order" id="order-btn" onclick="sendOrder()" disabled>Buyurtma berish</button>
-    </div>
+    <button class="order-btn" onclick="submitOrder()">🛍 Buyurtmani tasdiqlash</button>
 
     <script>
-        const tg = window.Telegram ? window.Telegram.WebApp : null;
-        let selectedContactType = "telegram"; // odatiy holat
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-        if (tg) {
-            tg.ready();
-            tg.expand();
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.getElementById('user-greeting').innerText = `Salom, ${tg.initDataUnsafe.user.first_name}!`;
-            }
-        }
+        let selectedTime = '';
+        let selectedBranch = '';
+        let userLocationGeo = ''; // GPS koordinatalari uchun
 
-        const SERVER_URL = "https://test-regime.onrender.com"; 
+        // VAQT TANLASH MANTIQLARI
+        function selectTime(timeVal, el) {
+            document.querySelectorAll('#timeGroup .btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
 
-        const dateInput = document.getElementById('delivery-date');
-        dateInput.min = new Date().toISOString().split('T')[0];
-
-        const prices = { small: 8000, standard: 10000, large: 15000 };
-        const quantities = { small: 0, standard: 0, large: 0 };
-
-        function toggleNotificationPopup() {
-            const popup = document.getElementById('notification-popup');
-            if (popup.style.display === 'flex') {
-                popup.style.display = 'none';
+            const customInput = document.getElementById('customTimeInput');
+            if (timeVal === 'custom') {
+                customInput.classList.remove('hidden');
+                selectedTime = 'custom';
             } else {
-                popup.style.display = 'flex';
-                document.getElementById('bell-badge').style.display = 'none';
+                customInput.classList.add('hidden');
+                selectedTime = timeVal;
             }
         }
 
-        // 3 TA OPTIONNI BOSGANDA ISHLAYDIGAN MANTIQ
-        function selectOption(type) {
-            selectedContactType = type;
-            const phoneBox = document.getElementById('phone-input-box');
-            const phoneInput = document.getElementById('popup-phone-input');
-            const phoneLabel = document.getElementById('phone-box-label');
+        // FILIAL TANLASH MANTIQLARI
+        function selectBranch(branchVal, el) {
+            document.querySelectorAll('#branchGroup .btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
 
-            if (type === 'sms' || type === 'call') {
-                phoneBox.style.display = 'flex';
-                phoneLabel.innerText = type === 'sms' 
-                    ? "💬 SMS yuboriladigan telefon raqami:" 
-                    : "📞 Qo'ng'iroq qilinadigan telefon raqami:";
-                
-                // Telegram WebApp orqali yoki brauzer auto-fill raqamini olish
-                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.phone_number) {
-                    phoneInput.value = tg.initDataUnsafe.user.phone_number;
+            const customLocBox = document.getElementById('customLocationOptions');
+            if (branchVal === 'custom') {
+                customLocBox.classList.remove('hidden');
+                selectedBranch = 'custom';
+            } else {
+                customLocBox.classList.add('hidden');
+                document.getElementById('manualAddressInput').classList.add('hidden');
+                document.getElementById('geoStatus').innerText = '';
+                selectedBranch = branchVal;
+                userLocationGeo = '';
+            }
+        }
+
+        // BOSHQA JOY ICHIDAGI OPTIONLAR (Qo'lda yoki Geo)
+        function chooseLocationType(type) {
+            const manualInput = document.getElementById('manualAddressInput');
+            const geoStatus = document.getElementById('geoStatus');
+
+            if (type === 'manual') {
+                manualInput.classList.remove('hidden');
+                geoStatus.innerText = '';
+                userLocationGeo = '';
+            } else if (type === 'geo') {
+                manualInput.classList.add('hidden');
+                manualInput.value = '';
+                geoStatus.innerText = "⏳ Geolokatsiya aniqlanmoqda...";
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            userLocationGeo = `https://maps.google.com/?q=${lat},${lon}`;
+                            geoStatus.innerText = "✅ Geolokatsiyangiz aniqlandi!";
+                        },
+                        (error) => {
+                            alert("Geolokatsiyani olishga ruxsat berilmadi yoki aniqlab bo'lmadi.");
+                            geoStatus.innerText = "❌ Geolokatsiya olinmadi. Iltimos, manzilni qo'lda kiriting.";
+                            manualInput.classList.remove('hidden');
+                        }
+                    );
                 } else {
-                    phoneInput.focus();
+                    alert("Qurilmangizda geolokatsiya funksiyasi qo'llab-quvvatlanmaydi.");
                 }
-            } else if (type === 'telegram') {
-                phoneBox.style.display = 'none';
-                
-                // Telegram Bot orqali ulash: Auto ID va /start rejimida botga yo'naltirish
-                const BOT_USERNAME = "qallama_bot"; 
-                let startParam = "web_user";
-
-                if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    startParam = `user_${tg.initDataUnsafe.user.id}`;
-                }
-
-                alert("Telegram botimizga yo'naltirilasiz. Kirgach, bot pastidagi 'START' tugmasini bosing!");
-                
-                // Telegram botga o'tkazib yuborish
-                window.location.href = `https://t.me/${BOT_USERNAME}?start=${startParam}`;
             }
         }
 
-        function saveContactPreference() {
-            const phoneVal = document.getElementById('popup-phone-input').value.trim();
-            if (!phoneVal) {
-                alert("Iltimos, telefon raqamingizni kiriting!");
+        // BUYURTMANI YUBORISH
+        async function submitOrder() {
+            // Vaqtni aniqlash
+            let finalTime = selectedTime;
+            if (selectedTime === 'custom') {
+                finalTime = document.getElementById('customTimeInput').value.trim();
+                if (!finalTime) {
+                    alert("Iltimos, o'zingiz xohlagan vaqtni kiriting!");
+                    return;
+                }
+            } else if (!selectedTime) {
+                alert("Iltimos, vaqtni tanlang!");
                 return;
             }
-            // Saytdagi asosiy telefon joyiga ko'chirish
-            document.getElementById('phone-number').value = phoneVal;
-            alert("Rahmat! Ma'lumotlaringiz saqlandi.");
-            document.getElementById('notification-popup').style.display = 'none';
-        }
 
-        function changeQuantity(item, change) {
-            if (quantities[item] + change >= 0) {
-                quantities[item] += change;
-                document.getElementById(`count-${item}`).innerText = quantities[item];
-                updateTotal();
+            // Filial / Manzilni aniqlash
+            let finalBranch = selectedBranch;
+            if (selectedBranch === 'custom') {
+                const manualAddr = document.getElementById('manualAddressInput').value.trim();
+                if (userLocationGeo) {
+                    finalBranch = `🚚 Yetkazib berish (Geolokatsiya: ${userLocationGeo})`;
+                } else if (manualAddr) {
+                    finalBranch = `🚚 Yetkazib berish (Manzil: ${manualAddr})`;
+                } else {
+                    alert("Iltimos, manzilni kiriting yoki geolokatsiyangizni yuboring!");
+                    return;
+                }
+            } else if (!selectedBranch) {
+                alert("Iltimos, filialni tanlang!");
+                return;
             }
-        }
 
-        function updateTotal() {
-            const total = (quantities.small * prices.small) + 
-                          (quantities.standard * prices.standard) + 
-                          (quantities.large * prices.large);
-            
-            const selectedDate = document.getElementById('delivery-date').value;
-            const selectedTime = document.getElementById('delivery-time').value;
-            const selectedBranch = document.getElementById('branch-select').value;
+            // Telegram user ma'lumotlari
+            const user = tg.initDataUnsafe?.user || {};
 
-            document.getElementById('total-text').innerText = `Jami: ${total.toLocaleString('uz-UZ')} so'm`;
-            document.getElementById('order-btn').disabled = !(total > 0 && selectedDate && selectedTime && selectedBranch);
-        }
-
-        async function sendOrder() {
-            const user = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) 
-                ? tg.initDataUnsafe.user 
-                : { id: null, first_name: "Veb-Mijoz", username: "" };
-
-            const total = (quantities.small * prices.small) + 
-                          (quantities.standard * prices.standard) + 
-                          (quantities.large * prices.large);
-            
-            let itemsText = "";
-            if (quantities.small > 0) itemsText += `• Kichik qallama (300g): ${quantities.small} ta\n`;
-            if (quantities.standard > 0) itemsText += `• Standard qallama (550g): ${quantities.standard} ta\n`;
-            if (quantities.large > 0) itemsText += `• Katta qallama (700g): ${quantities.large} ta\n`;
-
-            const payload = {
-                userId: user.id,
-                userName: user.first_name,
-                userHandle: user.username,
-                phone: document.getElementById('phone-number').value.trim(),
-                contactPreference: selectedContactType,
-                date: document.getElementById('delivery-date').value,
-                time: document.getElementById('delivery-time').value,
-                branch: document.getElementById('branch-select').value,
-                items: itemsText,
-                totalPrice: total.toLocaleString('uz-UZ')
+            const orderPayload = {
+                userId: user.id || null,
+                userName: user.first_name || 'Mijoz',
+                userHandle: user.username || '',
+                phone: "+998901234567", // Buni formangizdagi tel raqam inputidan olsangiz bo'ladi
+                time: finalTime,
+                branch: finalBranch,
+                date: new Date().toLocaleDateString('uz-UZ'),
+                items: "• Kichik qallama (300g): 2 ta", // Mini App dagi tanlangan mahsulotlar
+                totalPrice: "32 000"
             };
 
+            // Serverga API so'rov yuborish
             try {
-                const response = await fetch(`${SERVER_URL}/api/order`, {
+                const res = await fetch('https://test-regime.onrender.com/api/order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(orderPayload)
                 });
-                const result = await response.json();
-                if (result.success) {
-                    alert(`Buyurtmangiz qabul qilindi!\n\n📌 Buyurtma raqamingiz: #${result.orderId}\nUshbu raqam orqali saytda holatni tekshirib borishingiz mumkin.`);
-                    if (tg) tg.close();
-                } else {
-                    alert("Xatolik yuz berdi.");
-                }
-            } catch (error) {
-                alert("Server bilan aloqa o'rnatilmadi.");
-            }
-        }
 
-        async function checkOrderStatus() {
-            const orderId = document.getElementById('check-order-id').value.trim();
-            const resultDiv = document.getElementById('status-result');
-
-            if (!orderId) {
-                alert("Iltimos, buyurtma raqamini kiriting!");
-                return;
-            }
-
-            resultDiv.style.display = "block";
-            resultDiv.style.color = "#333";
-            resultDiv.innerText = "Tekshirilmoqda...";
-
-            try {
-                const response = await fetch(`${SERVER_URL}/api/order/${orderId}`);
-                const data = await response.json();
-
+                const data = await res.json();
                 if (data.success) {
-                    resultDiv.style.color = "#0088cc";
-                    resultDiv.innerHTML = `📦 <b>Buyurtma #${data.orderId}</b><br>Holati: <u>${data.status}</u>`;
+                    tg.close(); // Mini App ni yopish
                 } else {
-                    resultDiv.style.color = "red";
-                    resultDiv.innerText = "❌ Buyurtma topilmadi!";
+                    alert("Xatolik yuz berdi. Qayta urinib ko'ring.");
                 }
-            } catch (error) {
-                resultDiv.style.color = "red";
-                resultDiv.innerText = "⚠️ Server bilan aloqa yo'q.";
+            } catch (err) {
+                console.error(err);
+                alert("Server bilan aloqa uzildi!");
             }
         }
     </script>
