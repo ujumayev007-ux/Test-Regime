@@ -43,8 +43,8 @@
         .total-box { font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; margin-top: 15px; padding-top: 12px; border-top: 2px dashed #eee; color: #222; }
         .main-btn { width: 100%; padding: 16px; background: #28a745; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(40,167,69,0.3); margin-top: 10px; }
 
-        /* EKANNING O'NG TOMONIDA TURADIGAN QO'NG'IROQCHA TUGMASI */
-        .floating-bell { position: fixed; right: 20px; bottom: 80px; width: 56px; height: 56px; background-color: #0088cc; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 26px; box-shadow: 0 4px 15px rgba(0,136,204,0.4); cursor: pointer; z-index: 999; animation: pulse 2s infinite; }
+        /* 1. EKRANNING O'NG TOMON YUQORISIDA TURADIGAN QO'NG'IROQCHA TUGMASI */
+        .floating-bell { position: fixed; right: 16px; top: 16px; width: 50px; height: 50px; background-color: #0088cc; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,136,204,0.4); cursor: pointer; z-index: 999; animation: pulse 2s infinite; }
 
         @keyframes pulse {
             0% { transform: scale(1); }
@@ -64,6 +64,9 @@
     </style>
 </head>
 <body>
+
+    <!-- O'NG TOMON YUQORIDAGI QO'NG'IROQCHA -->
+    <div class="floating-bell" onclick="openContactModal()">🔔</div>
 
     <!-- 1. TAOMLAR MENYUSI -->
     <div class="card">
@@ -154,16 +157,13 @@
     <!-- 4. IXTIYORIY TELEFON RAQAMI -->
     <div class="card">
         <h3>📞 Telefon raqamingiz (Ixtiyoriy)</h3>
-        <input type="tel" id="optionalPhone" placeholder="+998901234567">
+        <input type="tel" id="optionalPhone" placeholder="+998 90 123-45-67" oninput="formatUzPhone(this)">
     </div>
 
     <!-- BUYURTMA BERISH TUGMASI -->
     <button class="main-btn" onclick="submitFinalOrder()">🛍 Buyurtmani rasmiylashtirish</button>
 
-    <!-- 5. DOIMIY QO'NG'IROQCHA TUGMASI (O'NG TOMONDA) -->
-    <div class="floating-bell" onclick="openContactModal()">🔔</div>
-
-    <!-- ALOQA USULI UCHUN POPUP MODAL -->
+    <!-- ALOQA USULI POPUP MODAL (QO'NG'IROQCHA BOSILGANDA) -->
     <div class="modal-overlay" id="contactModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -174,10 +174,16 @@
             <div class="form-group">
                 <label>Siz bilan qanday bog'lanaylik?</label>
                 <div class="btn-grid-3" id="prefGroup">
-                    <div class="opt-btn active" onclick="selectPref('Telegram', this)">📱 Telegram</div>
+                    <div class="opt-btn" onclick="selectPref('Telegram', this)">📱 Telegram</div>
                     <div class="opt-btn" onclick="selectPref('Telefon', this)">📞 Telefon</div>
                     <div class="opt-btn" onclick="selectPref('SMS', this)">💬 SMS</div>
                 </div>
+            </div>
+
+            <!-- TELEFON RAQAM KIRITISH MAYDONI (AVTOMATIK STANDART MASKADA) -->
+            <div class="form-group hidden" id="modalPhoneGroup">
+                <label id="modalPhoneLabel">Telefon raqamingizni kiriting:</label>
+                <input type="tel" id="modalPhoneInput" placeholder="+998 90 123-45-67" oninput="formatUzPhone(this)">
             </div>
 
             <button class="main-btn" style="margin-top: 15px;" onclick="closeContactModal()">Saqlash</button>
@@ -194,7 +200,7 @@
             p3: { name: 'Katta qallama (700 gr)', qty: 0, price: 15000 }
         };
 
-        let selectedPref = 'Telegram';
+        let selectedPref = '';
         let selectedTime = '';
         let selectedBranch = '';
         let userLocationGeo = '';
@@ -213,10 +219,35 @@
             document.getElementById('totalPrice').innerText = total.toLocaleString('uz-UZ') + " so'm";
         }
 
+        /* UZBEKISTON TELEFON KODI UCHUN MASKALASH (+998 XX XXX-XX-XX) */
+        function formatUzPhone(input) {
+            let digits = input.value.replace(/\D/g, '');
+            if (digits.startsWith('998')) {
+                digits = digits.substring(3);
+            }
+            digits = digits.substring(0, 9); // faqat 9 ta raqam olinadi
+
+            let formatted = '+998';
+            if (digits.length > 0) formatted += ' ' + digits.substring(0, 2);
+            if (digits.length >= 3) formatted += ' ' + digits.substring(2, 5);
+            if (digits.length >= 6) formatted += '-' + digits.substring(5, 7);
+            if (digits.length >= 8) formatted += '-' + digits.substring(7, 9);
+
+            input.value = formatted;
+        }
+
         function selectPref(pref, el) {
             document.querySelectorAll('#prefGroup .opt-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
             selectedPref = pref;
+
+            const phoneGroup = document.getElementById('modalPhoneGroup');
+            const phoneInput = document.getElementById('modalPhoneInput');
+
+            phoneGroup.classList.remove('hidden');
+            if (!phoneInput.value) {
+                phoneInput.value = '+998 ';
+            }
         }
 
         function selectTime(val, el) {
@@ -332,14 +363,18 @@
 
             const user = tg.initDataUnsafe?.user || {};
             const userName = (user.first_name || '') + ' ' + (user.last_name || '');
-            const optionalPhone = document.getElementById('optionalPhone').value.trim();
+            
+            /* Telefon raqamni asosiy kartochkadan yoki modal oynadan olish */
+            const mainPhone = document.getElementById('optionalPhone').value.trim();
+            const modalPhone = document.getElementById('modalPhoneInput').value.trim();
+            const finalPhone = mainPhone || modalPhone || 'Kiritilmadi';
 
             const orderPayload = {
                 userId: user.id || null,
                 userName: userName.trim() || 'Mijoz',
                 userHandle: user.username || '',
-                phone: optionalPhone || 'Kiritilmadi',
-                contactPreference: selectedPref,
+                phone: finalPhone,
+                contactPreference: selectedPref || 'Kiritilmadi',
                 time: finalTime,
                 branch: finalBranch,
                 date: new Date().toLocaleDateString('uz-UZ'),
