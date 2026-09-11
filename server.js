@@ -10,18 +10,35 @@ app.use(express.json());
 const BOT_TOKEN = '8533710758:AAEQ7hx3lyqiMayBC0Vt-IMJsv4hRIdFGwg';
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// Adminlarning Telegram ID raqamlari (@AsilbekSU va @Agrotexnikavaspestexnika)
+// Adminlarning Telegram ID raqamlari
 const ADMIN_IDS = ['8511645883', '8276788287'];
 
 let orderCounter = 1000;
 const orders = {};
 
-// Server holatini tekshirish uchun
+// Server holatini tekshirish
 app.get('/', (req, res) => {
     res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
-// Mini App'dan buyurtma qabul qilish
+// 🔍 YANGI: Sayt orqali buyurtma holatini tekshirish API-si
+app.get('/api/order/:id', (req, res) => {
+    const orderId = req.params.id;
+    const order = orders[orderId];
+
+    if (order) {
+        res.status(200).json({
+            success: true,
+            orderId: orderId,
+            status: order.status || "📥 Yangi buyurtma",
+            details: order.details
+        });
+    } else {
+        res.status(404).json({ success: false, message: "Buyurtma topilmadi" });
+    }
+});
+
+// Mini App / Web saytdan buyurtma qabul qilish
 app.post('/api/order', async (req, res) => {
     try {
         const orderData = req.body;
@@ -29,13 +46,14 @@ app.post('/api/order', async (req, res) => {
         const orderId = orderCounter;
 
         orders[orderId] = {
-            userId: orderData.userId,
+            userId: orderData.userId || null,
+            status: "📥 Yangi buyurtma",
             details: orderData,
             adminMessageIds: {}
         };
 
         let messageText = `📥 <b>BUYURTMA #${orderId}</b>\n\n`;
-        messageText += `👤 <b>Xaridor:</b> ${orderData.userName} (@${orderData.userHandle || 'yoq'})\n`;
+        messageText += `👤 <b>Xaridor:</b> ${orderData.userName} (${orderData.userHandle ? '@' + orderData.userHandle : 'Saytdan'})\n`;
         if (orderData.phone) messageText += `📞 <b>Tel:</b> ${orderData.phone}\n`;
         messageText += `📅 <b>Sana:</b> ${orderData.date}\n`;
         messageText += `⏰ <b>Vaqt:</b> ${orderData.time}\n`;
@@ -60,7 +78,6 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
-        // Ikkala adminga bir vaqtda xabar yuborish
         for (const adminId of ADMIN_IDS) {
             try {
                 const sentMsg = await bot.sendMessage(adminId, messageText, {
@@ -118,7 +135,10 @@ bot.on('callback_query', async (query) => {
             break;
     }
 
-    // Ikkala admin chatida ham holatni yangilash
+    // Xotiradagi statusni yangilaymiz
+    order.status = statusText;
+
+    // Adminlar chatidagi xabar tekstini yangilash
     for (const adminId of ADMIN_IDS) {
         const msgId = order.adminMessageIds[adminId];
         if (msgId) {
@@ -131,18 +151,21 @@ bot.on('callback_query', async (query) => {
                     reply_markup: query.message.reply_markup
                 });
             } catch (err) {
-                // Tahrirlashda xatolik bo'lsa o'tkazib yuboriladi
+                // Ignore edit error
             }
         }
     }
 
-    // Xaridorga avtomatik bildirishnoma yuborish
-    try {
-        await bot.sendMessage(order.userId, customerMessage);
-        bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
-    } catch (err) {
-        console.error("Xaridorga xabar yuborishda xatolik:", err.message);
+    // Agar Telegram userId bo'lsa, xaridorga botdan xabar boradi
+    if (order.userId) {
+        try {
+            await bot.sendMessage(order.userId, customerMessage);
+        } catch (err) {
+            console.error("Xaridorga xabar yuborishda xatolik:", err.message);
+        }
     }
+
+    bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
 });
 
 const PORT = process.env.PORT || 10000;
