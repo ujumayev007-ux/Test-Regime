@@ -13,16 +13,12 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 // Adminlarning Telegram ID raqamlari
 const ADMIN_IDS = ['8511645883', '8276788287'];
 
-// Buyurtmalarni vaqtinchalik xotirada saqlash obyekti
+// Buyurtmalarni vaqtinchalik xotirada saqlash
 const orders = {};
 
-// Unikal Vaqt Stampi bo'yicha ID yaratish algoritmi
+// Unikal Vaqt Stampi (Order ID) yaratish funksiyasi
 function generateOrderId() {
     const now = new Date();
-    // O'zbekiston vaqti offseti (UTC+5)
-    const utcHours = now.getUTCHours() + 5;
-    now.setUTCHours(utcHours);
-
     const year = String(now.getFullYear()).slice(-2);
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -38,7 +34,7 @@ app.get('/', (req, res) => {
     res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
-// 🔍 Sayt orqali buyurtma holatini tekshirish API-si
+// Sayt orqali buyurtma holatini tekshirish API
 app.get('/api/order/:id', (req, res) => {
     const orderId = req.params.id;
     const order = orders[orderId];
@@ -58,8 +54,7 @@ app.get('/api/order/:id', (req, res) => {
 // Mini App / Web saytdan buyurtma qabul qilish
 app.post('/api/order', async (req, res) => {
     try {
-        const orderData = req.body;
-        // Yangi unikal vaqt stampi asosida ID olamiz
+        const orderData = req.body || {};
         const orderId = generateOrderId();
 
         orders[orderId] = {
@@ -69,14 +64,26 @@ app.post('/api/order', async (req, res) => {
             adminMessageIds: {}
         };
 
+        // Xavfsiz xabar matni
+        const name = orderData.userName || 'Mijoz';
+        const handle = orderData.userHandle ? `@${orderData.userHandle}` : 'Mavjud emas';
+        const phone = orderData.phone || 'Ko\'rsatilmadi';
+        const pref = orderData.contactPreference || 'telegram';
+        const date = orderData.date || 'Ko\'rsatilmadi';
+        const time = orderData.time || 'Ko\'rsatilmadi';
+        const branch = orderData.branch || 'Ko\'rsatilmadi';
+        const items = orderData.items || 'Mahsulot tanlanmagan';
+        const total = orderData.totalPrice || '0';
+
         let messageText = `📥 <b>BUYURTMA #${orderId}</b>\n\n`;
-        messageText += `👤 <b>Xaridor:</b> ${orderData.userName} (${orderData.userHandle ? '@' + orderData.userHandle : 'Saytdan'})\n`;
-        if (orderData.phone) messageText += `📞 <b>Tel:</b> ${orderData.phone}\n`;
-        messageText += `📅 <b>Sana:</b> ${orderData.date}\n`;
-        messageText += `⏰ <b>Vaqt:</b> ${orderData.time}\n`;
-        messageText += `📍 <b>Filial:</b> ${orderData.branch}\n\n`;
-        messageText += `🫓 <b>Buyurtma tarkibi:</b>\n${orderData.items}\n`;
-        messageText += `💰 <b>Jami summa:</b> ${orderData.totalPrice} so'm\n\n`;
+        messageText += `👤 <b>Xaridor:</b> ${name} (${handle})\n`;
+        messageText += `📞 <b>Tel:</b> ${phone}\n`;
+        messageText += `💬 <b>Aloqa usuli:</b> ${pref}\n`;
+        messageText += `📅 <b>Sana:</b> ${date}\n`;
+        messageText += `⏰ <b>Vaqt:</b> ${time}\n`;
+        messageText += `📍 <b>Filial:</b> ${branch}\n\n`;
+        messageText += `🫓 <b>Buyurtma tarkibi:</b>\n${items}\n`;
+        messageText += `💰 <b>Jami summa:</b> ${total} so'm\n\n`;
         messageText += `🔄 <b>Holat:</b> <i>Yangi buyurtma</i>`;
 
         const keyboard = {
@@ -95,6 +102,7 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
+        // Adminlarga Telegram orqali yuborish
         for (const adminId of ADMIN_IDS) {
             try {
                 const sentMsg = await bot.sendMessage(adminId, messageText, {
@@ -103,83 +111,86 @@ app.post('/api/order', async (req, res) => {
                 });
                 orders[orderId].adminMessageIds[adminId] = sentMsg.message_id;
             } catch (err) {
-                console.error(`Admin ${adminId} ga xabar yuborishda xatolik:`, err.message);
+                console.error(`Admin ${adminId} ga yuborishda xato:`, err.message);
             }
         }
 
-        res.status(200).json({ success: true, orderId: orderId });
+        // Muvaffaqiyatli javob qaytarish
+        return res.status(200).json({ success: true, orderId: orderId });
+
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error("SERVER SERIOZNIY XATO:", error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// Adminlardan biri tugmani bosganda ishlovchi mantiq
+// Adminlar statusni o'zgartirganda
 bot.on('callback_query', async (query) => {
-    const data = query.data;
-    const parts = data.split('_');
-    const action = parts[1];
-    const orderId = parts[2];
+    try {
+        const data = query.data;
+        const parts = data.split('_');
+        const action = parts[1];
+        const orderId = parts[2];
 
-    const order = orders[orderId];
-    if (!order) {
-        bot.answerCallbackQuery(query.id, { text: "Buyurtma topilmadi!", show_alert: true });
-        return;
-    }
+        const order = orders[orderId];
+        if (!order) {
+            bot.answerCallbackQuery(query.id, { text: "Buyurtma topilmadi!", show_alert: true });
+            return;
+        }
 
-    let statusText = "";
-    let customerMessage = "";
+        let statusText = "";
+        let customerMessage = "";
 
-    switch (action) {
-        case 'accepted':
-            statusText = "📥 qabul qilindi";
-            customerMessage = `Sizning #${orderId}-sonli buyurtmangiz qabul qilindi. 🟢`;
-            break;
-        case 'cooking':
-            statusText = "👨‍🍳 tayyorlanmoqda";
-            customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyorlanmoqda. 👨‍🍳🫓`;
-            break;
-        case 'ready':
-            statusText = "✅ tayyor (olib ketishingiz mumkin)";
-            customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyor bo'ldi! Uni filialdan olib ketishingiz mumkin. 🫓✨`;
-            break;
-        case 'courier':
-            statusText = "🚚 kuryerga berildi";
-            customerMessage = `Sizning #${orderId}-sonli buyurtmangiz kuryerga topshirildi. 🚚`;
-            break;
-        case 'cancel':
-            statusText = "❌ bekor qilindi";
-            customerMessage = `Afsuski, sizning #${orderId}-sonli buyurtmangiz bekor qilindi. ❌`;
-            break;
-    }
+        switch (action) {
+            case 'accepted':
+                statusText = "📥 qabul qilindi";
+                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz qabul qilindi. 🟢`;
+                break;
+            case 'cooking':
+                statusText = "👨‍🍳 tayyorlanmoqda";
+                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyorlanmoqda. 👨‍🍳🫓`;
+                break;
+            case 'ready':
+                statusText = "✅ tayyor (olib ketishingiz mumkin)";
+                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyor bo'ldi! Uni filialdan olib ketishingiz mumkin. 🫓✨`;
+                break;
+            case 'courier':
+                statusText = "🚚 kuryerga berildi";
+                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz kuryerga topshirildi. 🚚`;
+                break;
+            case 'cancel':
+                statusText = "❌ bekor qilindi";
+                customerMessage = `Afsuski, sizning #${orderId}-sonli buyurtmangiz bekor qilindi. ❌`;
+                break;
+        }
 
-    order.status = statusText;
+        order.status = statusText;
 
-    for (const adminId of ADMIN_IDS) {
-        const msgId = order.adminMessageIds[adminId];
-        if (msgId) {
-            try {
-                const updatedText = query.message.text.replace(/🔄 Holat: .*/, `🔄 <b>Holat:</b> ${statusText}`);
-                await bot.editMessageText(updatedText, {
-                    chat_id: adminId,
-                    message_id: msgId,
-                    parse_mode: 'HTML',
-                    reply_markup: query.message.reply_markup
-                });
-            } catch (err) {
-                // Edit error ignore
+        for (const adminId of ADMIN_IDS) {
+            const msgId = order.adminMessageIds[adminId];
+            if (msgId) {
+                try {
+                    const updatedText = query.message.text.replace(/🔄 Holat: .*/, `🔄 <b>Holat:</b> ${statusText}`);
+                    await bot.editMessageText(updatedText, {
+                        chat_id: adminId,
+                        message_id: msgId,
+                        parse_mode: 'HTML',
+                        reply_markup: query.message.reply_markup
+                    });
+                } catch (err) {}
             }
         }
-    }
 
-    if (order.userId) {
-        try {
-            await bot.sendMessage(order.userId, customerMessage);
-        } catch (err) {
-            console.error("Xaridorga xabar yuborishda xatolik:", err.message);
+        if (order.userId) {
+            try {
+                await bot.sendMessage(order.userId, customerMessage);
+            } catch (err) {}
         }
-    }
 
-    bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
+        bot.answerCallbackQuery(query.id, { text: `Status saqlandi: ${statusText}` });
+    } catch (e) {
+        console.error("Callback xatosi:", e);
+    }
 });
 
 const PORT = process.env.PORT || 10000;
