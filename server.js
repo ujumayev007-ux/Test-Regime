@@ -98,6 +98,9 @@ app.post('/api/order', async (req, res) => {
                 ],
                 [
                     { text: "🚚 kuryerga berildi", callback_data: `status_courier_${orderId}` },
+                    { text: "🏁 Buyurtma yakunlandi", callback_data: `status_completed_${orderId}` }
+                ],
+                [
                     { text: "❌ bekor qilish", callback_data: `status_cancel_${orderId}` }
                 ]
             ]
@@ -116,14 +119,14 @@ app.post('/api/order', async (req, res) => {
             }
         }
 
-        // 2. XARIDORGA DAFATAN BOT ORQALI TASDIQ XABARI VA INLINE TUGMALAR YUBORISH
+        // 2. XARIDORGA TASDIQ XABARI
         if (orderData.userId) {
             let customerMsg = `✅ <b>Buyurtmangiz muvaffaqiyatli qabul qilindi!</b>\n\n`;
             customerMsg += `🆔 <b>Buyurtma raqamingiz:</b> #${orderId}\n`;
             customerMsg += `📍 <b>Filial:</b> ${branch}\n`;
             customerMsg += `📅 <b>Sana va vaqt:</b> ${date} soat ${time} da\n`;
             customerMsg += `💰 <b>Jami summa:</b> ${total} so'm\n\n`;
-            customerMsg += `🫓 <b>Tarkibi:</b>\n${items}\n`;
+            customerMsg += `🫓 <b>Tarkibi:</b>\n${items}\n\n`;
             customerMsg += `🔄 <b>Joriy holat:</b> 📥 Yangi buyurtma`;
 
             const customerKeyboard = {
@@ -171,10 +174,13 @@ bot.on('callback_query', async (query) => {
             userOrders.reverse().slice(0, 10).forEach(([id, o], index) => {
                 const shortId = id.slice(-6);
                 const dt = o.details;
+                const itemsText = dt.items ? dt.items : "Ko'rsatilmadi";
+
                 historyMsg += `${index + 1}. <b>#${shortId}</b> (${dt.date || ''})\n`;
-                historyMsg += `   📍 ${dt.branch || 'Filial'}\n`;
-                historyMsg += `   💰 Summa: ${dt.totalPrice || '0'} so'm\n`;
-                historyMsg += `   🔄 Holat: <b>${o.status}</b>\n`;
+                historyMsg += `   📍 <b>Filial:</b> ${dt.branch || 'Ko\'rsatilmadi'}\n`;
+                historyMsg += `   🫓 <b>Tarkibi:</b> ${itemsText}\n`;
+                historyMsg += `   💰 <b>Summa:</b> ${dt.totalPrice || '0'} so'm\n`;
+                historyMsg += `   🔄 <b>Holat:</b> ${o.status}\n`;
                 historyMsg += `-----------------------------\n`;
             });
 
@@ -222,6 +228,10 @@ bot.on('callback_query', async (query) => {
                 statusText = "🚚 kuryerga berildi";
                 customerMessage = `🚚 Sizning <b>#${orderId}</b>-sonli buyurtmangiz kuryerga topshirildi.`;
                 break;
+            case 'completed':
+                statusText = "✅ Yakunlandi";
+                customerMessage = `🎉 Sizning <b>#${orderId}</b>-sonli buyurtmangiz muvaffaqiyatli yakunlandi. Xaridingiz uchun rahmat!`;
+                break;
             case 'cancel':
                 statusText = "❌ bekor qilindi";
                 customerMessage = `❌ Afsuski, sizning <b>#${orderId}</b>-sonli buyurtmangiz bekor qilindi.`;
@@ -246,7 +256,7 @@ bot.on('callback_query', async (query) => {
             }
         }
 
-        // Xaridorga status o'zgargani haqida yangilangan xabar va Buyurtmalar tarixi tugmasini yuborish
+        // Xaridorga status o'zgargani haqida yangilangan xabar yuborish
         if (order.userId) {
             try {
                 await bot.sendMessage(order.userId, customerMessage, {
