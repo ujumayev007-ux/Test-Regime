@@ -13,7 +13,7 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 // Adminlarning Telegram ID raqamlari
 const ADMIN_IDS = ['8511645883', '8276788287'];
 
-// Buyurtmalarni vaqtinchalik xotirada saqlash
+// Buyurtmalarni xotirada saqlash
 const orders = {};
 
 // Unikal Vaqt Stampi (Order ID) yaratish funksiyasi
@@ -34,11 +34,9 @@ app.get('/', (req, res) => {
     res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
-// Buyurtma holatini tekshirish API (To'liq ID yoki oxirgi qisqa raqamlar bo'yicha)
+// Buyurtma holatini tekshirish API
 app.get('/api/order/:id', (req, res) => {
     const inputId = req.params.id.trim();
-
-    // Exact match yoki oxirgi raqamlar mos kelishini izlash
     const foundOrderId = Object.keys(orders).find(id => id === inputId || id.endsWith(inputId));
 
     if (foundOrderId) {
@@ -77,18 +75,19 @@ app.post('/api/order', async (req, res) => {
         const items = orderData.items || 'Mahsulot tanlanmagan';
         const total = orderData.totalPrice || '0';
 
-        let messageText = `📥 <b>BUYURTMA #${orderId}</b>\n\n`;
-        messageText += `👤 <b>Xaridor:</b> ${name} (${handle})\n`;
-        messageText += `📞 <b>Tel:</b> ${phone}\n`;
-        messageText += `💬 <b>Aloqa usuli:</b> ${pref}\n`;
-        messageText += `📅 <b>Sana:</b> ${date}\n`;
-        messageText += `⏰ <b>Vaqt:</b> ${time}\n`;
-        messageText += `📍 <b>Filial:</b> ${branch}\n\n`;
-        messageText += `🫓 <b>Buyurtma tarkibi:</b>\n${items}\n`;
-        messageText += `💰 <b>Jami summa:</b> ${total} so'm\n\n`;
-        messageText += `🔄 <b>Holat:</b> <i>Yangi buyurtma</i>`;
+        // 1. ADMINLAR UCHUN XABAR MATNI VA TUGMALAR
+        let adminMessageText = `📥 <b>YANGI BUYURTMA #${orderId}</b>\n\n`;
+        adminMessageText += `👤 <b>Xaridor:</b> ${name} (${handle})\n`;
+        adminMessageText += `📞 <b>Tel:</b> ${phone}\n`;
+        adminMessageText += `💬 <b>Aloqa usuli:</b> ${pref}\n`;
+        adminMessageText += `📅 <b>Sana:</b> ${date}\n`;
+        adminMessageText += `⏰ <b>Vaqt:</b> ${time}\n`;
+        adminMessageText += `📍 <b>Filial:</b> ${branch}\n\n`;
+        adminMessageText += `🫓 <b>Buyurtma tarkibi:</b>\n${items}\n`;
+        adminMessageText += `💰 <b>Jami summa:</b> ${total} so'm\n\n`;
+        adminMessageText += `🔄 <b>Holat:</b> <i>Yangi buyurtma</i>`;
 
-        const keyboard = {
+        const adminKeyboard = {
             inline_keyboard: [
                 [
                     { text: "📥 qabul qilindi", callback_data: `status_accepted_${orderId}` },
@@ -104,15 +103,44 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
+        // Adminlarga yuborish
         for (const adminId of ADMIN_IDS) {
             try {
-                const sentMsg = await bot.sendMessage(adminId, messageText, {
+                const sentMsg = await bot.sendMessage(adminId, adminMessageText, {
                     parse_mode: 'HTML',
-                    reply_markup: keyboard
+                    reply_markup: adminKeyboard
                 });
                 orders[orderId].adminMessageIds[adminId] = sentMsg.message_id;
             } catch (err) {
                 console.error(`Admin ${adminId} ga yuborishda xato:`, err.message);
+            }
+        }
+
+        // 2. XARIDORGA DAFATAN BOT ORQALI TASDIQ XABARI VA INLINE TUGMALAR YUBORISH
+        if (orderData.userId) {
+            let customerMsg = `✅ <b>Buyurtmangiz muvaffaqiyatli qabul qilindi!</b>\n\n`;
+            customerMsg += `🆔 <b>Buyurtma raqamingiz:</b> #${orderId}\n`;
+            customerMsg += `📍 <b>Filial:</b> ${branch}\n`;
+            customerMsg += `📅 <b>Sana va vaqt:</b> ${date} soat ${time} da\n`;
+            customerMsg += `💰 <b>Jami summa:</b> ${total} so'm\n\n`;
+            customerMsg += `🫓 <b>Tarkibi:</b>\n${items}\n`;
+            customerMsg += `🔄 <b>Joriy holat:</b> 📥 Yangi buyurtma`;
+
+            const customerKeyboard = {
+                inline_keyboard: [
+                    [
+                        { text: "📜 Buyurtmalarim tarixi", callback_data: "user_order_history" }
+                    ]
+                ]
+            };
+
+            try {
+                await bot.sendMessage(orderData.userId, customerMsg, {
+                    parse_mode: 'HTML',
+                    reply_markup: customerKeyboard
+                });
+            } catch (userErr) {
+                console.error("Xaridorga Telegram xabar yuborishda xato:", userErr.message);
             }
         }
 
@@ -124,10 +152,46 @@ app.post('/api/order', async (req, res) => {
     }
 });
 
-// Adminlar statusni o'zgartirganda
+// Telegram Bot Callback va buyruqlarni boshqarish
 bot.on('callback_query', async (query) => {
     try {
         const data = query.data;
+        const userId = query.from.id;
+
+        // --- XARIDOR BUYURTMALAR TARIXINI BOSGANDA ---
+        if (data === "user_order_history") {
+            const userOrders = Object.entries(orders).filter(([id, o]) => String(o.userId) === String(userId));
+
+            if (userOrders.length === 0) {
+                bot.answerCallbackQuery(query.id, { text: "Sizda hali buyurtmalar mavjud emas.", show_alert: true });
+                return;
+            }
+
+            let historyMsg = `📜 <b>SIZNING BUYURTMALAR TARIXINGIZ:</b>\n\n`;
+            userOrders.reverse().slice(0, 10).forEach(([id, o], index) => {
+                const shortId = id.slice(-6);
+                const dt = o.details;
+                historyMsg += `${index + 1}. <b>#${shortId}</b> (${dt.date || ''})\n`;
+                historyMsg += `   📍 ${dt.branch || 'Filial'}\n`;
+                historyMsg += `   💰 Summa: ${dt.totalPrice || '0'} so'm\n`;
+                historyMsg += `   🔄 Holat: <b>${o.status}</b>\n`;
+                historyMsg += `-----------------------------\n`;
+            });
+
+            await bot.sendMessage(userId, historyMsg, {
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: "🔄 Yangilash", callback_data: "user_order_history" }]
+                    ]
+                }
+            });
+
+            bot.answerCallbackQuery(query.id);
+            return;
+        }
+
+        // --- ADMINLAR STATUSNI O'ZGARTIRGANDA ---
         const parts = data.split('_');
         const action = parts[1];
         const orderId = parts[2];
@@ -144,28 +208,29 @@ bot.on('callback_query', async (query) => {
         switch (action) {
             case 'accepted':
                 statusText = "📥 qabul qilindi";
-                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz qabul qilindi. 🟢`;
+                customerMessage = `🟢 Sizning <b>#${orderId}</b>-sonli buyurtmangiz qabul qilindi.`;
                 break;
             case 'cooking':
                 statusText = "👨‍🍳 tayyorlanmoqda";
-                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyorlanmoqda. 👨‍🍳🫓`;
+                customerMessage = `👨‍🍳🫓 Sizning <b>#${orderId}</b>-sonli buyurtmangiz tayyorlanmoqda.`;
                 break;
             case 'ready':
                 statusText = "✅ tayyor (olib ketishingiz mumkin)";
-                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz tayyor bo'ldi! Uni filialdan olib ketishingiz mumkin. 🫓✨`;
+                customerMessage = `🫓✨ Sizning <b>#${orderId}</b>-sonli buyurtmangiz tayyor bo'ldi! Uni filialdan olib ketishingiz mumkin.`;
                 break;
             case 'courier':
                 statusText = "🚚 kuryerga berildi";
-                customerMessage = `Sizning #${orderId}-sonli buyurtmangiz kuryerga topshirildi. 🚚`;
+                customerMessage = `🚚 Sizning <b>#${orderId}</b>-sonli buyurtmangiz kuryerga topshirildi.`;
                 break;
             case 'cancel':
                 statusText = "❌ bekor qilindi";
-                customerMessage = `Afsuski, sizning #${orderId}-sonli buyurtmangiz bekor qilindi. ❌`;
+                customerMessage = `❌ Afsuski, sizning <b>#${orderId}</b>-sonli buyurtmangiz bekor qilindi.`;
                 break;
         }
 
         order.status = statusText;
 
+        // Admin xabaridagi statusni yangilash
         for (const adminId of ADMIN_IDS) {
             const msgId = order.adminMessageIds[adminId];
             if (msgId) {
@@ -181,9 +246,17 @@ bot.on('callback_query', async (query) => {
             }
         }
 
+        // Xaridorga status o'zgargani haqida yangilangan xabar va Buyurtmalar tarixi tugmasini yuborish
         if (order.userId) {
             try {
-                await bot.sendMessage(order.userId, customerMessage);
+                await bot.sendMessage(order.userId, customerMessage, {
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "📜 Buyurtmalarim tarixi", callback_data: "user_order_history" }]
+                        ]
+                    }
+                });
             } catch (err) {}
         }
 
