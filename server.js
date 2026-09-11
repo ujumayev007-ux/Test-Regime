@@ -34,15 +34,18 @@ app.get('/', (req, res) => {
     res.send('Qallama shop serveri faol ishlamoqda!');
 });
 
-// Sayt orqali buyurtma holatini tekshirish API
+// Buyurtma holatini tekshirish API (To'liq ID yoki oxirgi qisqa raqamlar bo'yicha)
 app.get('/api/order/:id', (req, res) => {
-    const orderId = req.params.id;
-    const order = orders[orderId];
+    const inputId = req.params.id.trim();
 
-    if (order) {
+    // Exact match yoki oxirgi raqamlar mos kelishini izlash
+    const foundOrderId = Object.keys(orders).find(id => id === inputId || id.endsWith(inputId));
+
+    if (foundOrderId) {
+        const order = orders[foundOrderId];
         res.status(200).json({
             success: true,
-            orderId: orderId,
+            orderId: foundOrderId,
             status: order.status || "📥 Yangi buyurtma",
             details: order.details
         });
@@ -64,7 +67,6 @@ app.post('/api/order', async (req, res) => {
             adminMessageIds: {}
         };
 
-        // Xavfsiz xabar matni
         const name = orderData.userName || 'Mijoz';
         const handle = orderData.userHandle ? `@${orderData.userHandle}` : 'Mavjud emas';
         const phone = orderData.phone || 'Ko\'rsatilmadi';
@@ -102,7 +104,6 @@ app.post('/api/order', async (req, res) => {
             ]
         };
 
-        // Adminlarga Telegram orqali yuborish
         for (const adminId of ADMIN_IDS) {
             try {
                 const sentMsg = await bot.sendMessage(adminId, messageText, {
@@ -115,11 +116,10 @@ app.post('/api/order', async (req, res) => {
             }
         }
 
-        // Muvaffaqiyatli javob qaytarish
         return res.status(200).json({ success: true, orderId: orderId });
 
     } catch (error) {
-        console.error("SERVER SERIOZNIY XATO:", error);
+        console.error("SERVER XATOLIGI:", error);
         return res.status(500).json({ success: false, error: error.message });
     }
 });
